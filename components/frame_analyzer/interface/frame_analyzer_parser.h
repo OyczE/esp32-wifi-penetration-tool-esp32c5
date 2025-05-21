@@ -10,7 +10,11 @@
 #define FRAME_ANALYZER_PARSER_H
 
 #include <stdint.h>
-#include "esp_wifi_types.h"
+#include <stdbool.h>
+#include "esp_wifi.h"
+
+
+//#include "esp_wifi_types.h"
 
 #include "frame_analyzer_types.h"
 

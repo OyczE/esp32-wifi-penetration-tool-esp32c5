@@ -10,6 +10,7 @@
 #define FRAME_ANALYZER_H
 
 #include "esp_event.h"
+#include <stdint.h>
 
 ESP_EVENT_DECLARE_BASE(FRAME_ANALYZER_EVENTS);
 
