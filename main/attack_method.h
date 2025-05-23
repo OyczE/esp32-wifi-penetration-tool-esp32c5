@@ -11,6 +11,11 @@
 
 #include "esp_wifi_types.h"
 
+typedef struct WifiApList {
+    wifi_ap_record_t * ap_records;
+    size_t count;
+} WifiApList;
+
 /**
  * @brief Starts periodic deauthentication frame broadcast
  * 
@@ -18,6 +23,8 @@
  * @param period_sec period of broadcast in seconds 
  */
 void attack_method_broadcast(const wifi_ap_record_t *ap_record, unsigned period_sec);
+
+void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_record[], size_t count, unsigned period_sec);
 
 /**
  * @brief Stop periodic deauthentication frame broadcast

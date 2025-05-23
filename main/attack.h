@@ -47,8 +47,10 @@ typedef struct {
     uint8_t type;
     uint8_t method;
     uint8_t timeout;
-    const wifi_ap_record_t *ap_record;
+    wifi_ap_record_t ap_records[3];
+    uint16_t actualAmount;
 } attack_config_t;
+
 
 /**
  * @brief Contains current attack status.

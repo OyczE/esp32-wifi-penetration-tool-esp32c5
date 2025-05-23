@@ -8,12 +8,12 @@
  * 
  * This component bypasses blocking mechanism that doesn't allow sending some arbitrary 802.11 frames like deauth etc.
  */
+
 #ifndef WSL_BYPASSER_H
 #define WSL_BYPASSER_H
 
 #include "esp_wifi.h"
 #include <stdint.h>
-
 
 /**
  * @brief Sends frame in frame_buffer using esp_wifi_80211_tx but bypasses blocking mechanism
@@ -32,5 +32,7 @@ void wsl_bypasser_send_raw_frame(const uint8_t *frame_buffer, int size);
  * @param ap_record AP record with valid AP information 
  */
 void wsl_bypasser_send_deauth_frame(const wifi_ap_record_t *ap_record);
+
+void wsl_bypasser_send_deauth_frame_multiple_aps(wifi_ap_record_t *ap_records, size_t count);
 
 #endif

@@ -97,6 +97,40 @@ static void attack_timeout(void* arg){
     }
 }
 
+void log_attack_request(const attack_request_t *request) {
+    if (!request) {
+        ESP_LOGI(TAG, "attack_request_t is NULL");
+        return;
+    }
+
+    ESP_LOGI(TAG, "===== Attack Request =====");
+    ESP_LOGI(TAG, "Number of APs: %d", request->num_aps);
+    ESP_LOGI(TAG, "Attack Type: %d", request->type);
+    ESP_LOGI(TAG, "Attack Method: %d", request->method);
+    ESP_LOGI(TAG, "Timeout: %d seconds", request->timeout);
+
+    if (request->num_aps > 0) {
+        ESP_LOGI(TAG, "AP IDs:");
+        for (uint8_t i = 0; i < request->num_aps; i++) {
+            ESP_LOGI(TAG, "  AP ID[%d]: %d", i, request->ap_ids[i]);
+        }
+    } else {
+        ESP_LOGI(TAG, "AP IDs: NULL or empty");
+    }
+}
+
+void log_attack_config(const attack_config_t *config) {
+    if (!config) {
+        ESP_LOGI(TAG, "log_attack_config attack_config_t is NULL");
+        return;
+    }
+
+    ESP_LOGI(TAG, "===== Attack Config =====");
+    ESP_LOGI(TAG, "Attack Type: %d", config->type);
+    ESP_LOGI(TAG, "Attack Method: %d", config->method);
+    ESP_LOGI(TAG, "Timeout: %d seconds", config->timeout);
+}
+
 /**
  * @brief Callback for WEBSERVER_EVENT_ATTACK_REQUEST event.
  * 
@@ -112,18 +146,29 @@ static void attack_timeout(void* arg){
  * @param event_data expects attack_request_t
  */
 static void attack_request_handler(void *args, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+
     ESP_LOGI(TAG, "Starting attack...");
+
     attack_request_t *attack_request = (attack_request_t *) event_data;
+
+    log_attack_request(attack_request);
+
     attack_config_t attack_config = { .type = attack_request->type, .method = attack_request->method, .timeout = attack_request->timeout };
-    attack_config.ap_record = wifictl_get_ap_record(attack_request->ap_record_id);
-    
+    //attack_config.ap_record = wifictl_get_ap_record(attack_request->ap_record_id);
+    attack_config.actualAmount = attack_request->num_aps;
+    for (int i = 0; i < attack_request->num_aps; i++) {
+        attack_config.ap_records[i] = *wifictl_get_ap_record(attack_request->ap_ids[i]);
+    }
+
+    log_attack_config (&attack_config);
+
     attack_status.state = RUNNING;
     attack_status.type = attack_config.type;
 
-    if(attack_config.ap_record == NULL){
-        ESP_LOGE(TAG, "NPE: No attack_config.ap_record!");
-        return;
-    }
+    //TODO if(attack_config.ap_record == NULL){
+        //ESP_LOGE(TAG, "NPE: No attack_config.ap_record!");
+        //return;
+    //}
     // set timeout
     ESP_ERROR_CHECK(esp_timer_start_once(attack_timeout_handle, attack_config.timeout * 1000000));
     // start attack based on it's type

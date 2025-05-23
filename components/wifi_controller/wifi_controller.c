@@ -114,6 +114,7 @@ void wifictl_sta_connect_to_ap(const wifi_ap_record_t *ap_record, const char pas
 }
 
 void wifictl_sta_disconnect(){
+    ESP_LOGW(TAG, "wifictl_sta_disconnect");
     ESP_ERROR_CHECK(esp_wifi_disconnect());
 }
 
@@ -136,8 +137,9 @@ void wifictl_get_sta_mac(uint8_t *mac_sta){
 }
 
 void wifictl_set_channel(uint8_t channel){
-    if((channel == 0) || (channel >  13)){
-        ESP_LOGE(TAG,"Channel out of range. Expected value from <1,13> but got %u", channel);
+    ESP_LOGW(TAG, "Setting channel: %d", channel);
+    if((channel == 0) || (channel >  165)){
+        ESP_LOGE(TAG,"Channel out of range. Expected value from <1,165> but got %u", channel);
         return;
     }
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);

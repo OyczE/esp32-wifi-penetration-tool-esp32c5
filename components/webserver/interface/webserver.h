@@ -22,10 +22,12 @@ enum {
  * 
  */
 typedef struct {
-    uint8_t ap_record_id;   //< ID of chosen AP. It can be used to access ap_records array from wifi_controller - ap_scanner
+    //uint8_t ap_record_id;   //< ID of chosen AP. It can be used to access ap_records array from wifi_controller - ap_scanner
     uint8_t type;           //< Chosen type of attack
     uint8_t method;         //< Chosen method of attack
     uint8_t timeout;        //< Attack timeout in seconds
+    uint8_t num_aps;       //< Liczba wybranych AP
+    uint8_t ap_ids[10];  //< Statyczna tablica AP IDs (zawsze 10 elementów)  
 } attack_request_t;
 
 /**

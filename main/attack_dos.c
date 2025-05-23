@@ -24,17 +24,25 @@ void attack_dos_start(attack_config_t *attack_config) {
     method = attack_config->method;
     switch(method){
         case ATTACK_DOS_METHOD_BROADCAST:
-            ESP_LOGD(TAG, "ATTACK_DOS_METHOD_BROADCAST");
-            attack_method_broadcast(attack_config->ap_record, 1);
+            ESP_LOGI(TAG, "ATTACK_DOS_METHOD_BROADCAST starting for mutiple APs listed below");
+            for (int i=0; i< attack_config->actualAmount; i++) {
+                ESP_LOGI(TAG, "About to invoke ATTACK_DOS_METHOD_BROADCAST 4 SSID: %s", attack_config->ap_records[i].ssid);
+                ESP_LOGI(TAG, "Channel is: %d", attack_config->ap_records[i].primary);
+            }
+            ESP_LOGI(TAG, "Integrity check before function call:");
+            for (int i = 0; i < attack_config->actualAmount; i++) {
+                ESP_LOGI(TAG, "SSID: %s, Channel: %d", attack_config->ap_records[i].ssid, attack_config->ap_records[i].primary);
+            }
+            attack_method_broadcast_multiple_ap(attack_config->ap_records, attack_config->actualAmount, 1);
             break;
         case ATTACK_DOS_METHOD_ROGUE_AP:
             ESP_LOGD(TAG, "ATTACK_DOS_METHOD_ROGUE_AP");
-            attack_method_rogueap(attack_config->ap_record);
+            //TODO fix me attack_method_rogueap(attack_config->ap_record);
             break;
         case ATTACK_DOS_METHOD_COMBINE_ALL:
             ESP_LOGD(TAG, "ATTACK_DOS_METHOD_ROGUE_AP");
-            attack_method_rogueap(attack_config->ap_record);
-            attack_method_broadcast(attack_config->ap_record, 1);
+            //TODO fix me attack_method_rogueap(attack_config->ap_record);
+            //TODO fix me attack_method_broadcast(attack_config->ap_record, 1);
             break;
         default:
             ESP_LOGE(TAG, "Method unknown! DoS attack not started.");

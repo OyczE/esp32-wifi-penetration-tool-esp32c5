@@ -49,7 +49,7 @@ static void eapolkey_frame_handler(void *args, esp_event_base_t event_base, int3
 
 void attack_handshake_start(attack_config_t *attack_config){
     ESP_LOGI(TAG, "Starting handshake attack...");
-    method = attack_config->method;
+    /*method = attack_config->method;
     ap_record = attack_config->ap_record;
     pcap_serializer_init();
     hccapx_serializer_init(ap_record->ssid, strlen((char *)ap_record->ssid));
@@ -72,7 +72,7 @@ void attack_handshake_start(attack_config_t *attack_config){
             break;
         default:
             ESP_LOGD(TAG, "Method unknown! Fallback to ATTACK_HANDSHAKE_METHOD_PASSIVE");
-    }
+    }*/
 }
 
 void attack_handshake_stop(){
