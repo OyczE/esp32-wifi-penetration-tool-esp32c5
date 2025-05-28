@@ -50,9 +50,6 @@ static void timer_send_deauth_frame_multiple_aps(void *arg){
                  (char*) wifiApList->ap_records[i].ssid, 
                  wifiApList->ap_records[i].primary);  
     }
-
-
-
     wsl_bypasser_send_deauth_frame_multiple_aps(wifiApList->ap_records, wifiApList->count);
 }
 
@@ -93,11 +90,25 @@ void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_recordss[], s
     memcpy(ap_list->ap_records, ap_recordss, count * sizeof(wifi_ap_record_t));
     ap_list->count = count; // Przypisujemy liczbę APs
 
+    ESP_LOGI(TAG, "Wylaczamy i resetujemy WIFI");
+    esp_wifi_stop();
+    esp_wifi_start();
+
+    ESP_LOGD(TAG, "Stopping AP...");
+    wifi_config_t wifi_config = {
+        .ap = {
+            .max_connection = 0
+        },
+    };
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+    ESP_LOGD(TAG, "AP stopped");
+
 
     const esp_timer_create_args_t deauth_timer_args = {
         .callback = &timer_send_deauth_frame_multiple_aps,
         .arg = (void *) ap_list
     };
+
     ESP_ERROR_CHECK(esp_timer_create(&deauth_timer_args, &deauth_timer_handle));
     ESP_ERROR_CHECK(esp_timer_start_periodic(deauth_timer_handle, period_sec * 1000000));
 }
