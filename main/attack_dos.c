@@ -22,6 +22,7 @@ static attack_dos_methods_t method = -1;
 void attack_dos_start(attack_config_t *attack_config) {
     ESP_LOGI(TAG, "Starting DoS attack...");
     method = attack_config->method;
+    ESP_LOGI(TAG, "Attack Method selected: %d", method);
     switch(method){
         case ATTACK_DOS_METHOD_BROADCAST:
             ESP_LOGI(TAG, "ATTACK_DOS_METHOD_BROADCAST starting for mutiple APs listed below");

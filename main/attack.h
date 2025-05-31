@@ -47,7 +47,7 @@ typedef struct {
     uint8_t type;
     uint8_t method;
     uint8_t timeout;
-    wifi_ap_record_t ap_records[3];
+    wifi_ap_record_t ap_records[10];
     uint16_t actualAmount;
 } attack_config_t;
 

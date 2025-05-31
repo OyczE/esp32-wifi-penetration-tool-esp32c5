@@ -115,28 +115,26 @@
                 <p>
                     <label for="attack_type">Attack type:</label>
                     <select id="attack_type" onchange="updateConfigurableFields(this)" required>
-                        <option value="0" title="This type is not implemented yet." disabled>ATTACK_TYPE_PASSIVE</option>
-                        <option value="1">ATTACK_TYPE_HANDSHAKE</option>
-                        <option value="2" selected>ATTACK_TYPE_PMKID</option>
-                        <option value="3">ATTACK_TYPE_DOS</option>
+                        <option value="3" selected>ATTACK_TYPE_DOS</option>
                     </select>
                 </p>
                 <p>
                     <label for="attack_method">Attack method:</label>
-                    <select id="attack_method" required disabled>
-                        <option value="" selected disabled hidden>NOT AVAILABLE</option>
+                    <select id="attack_method" required>
+                        <option value="1" selected>DEAUTH_BROADCAST (ACTIVE)</option>
                     </select>
                 </p>
                 <p>
-                    <label for="attack_timeout">Attack timeout (seconds):</label>
-                    <input type="number" min="0" max="255" id="attack_timeout" value="" required>
+                    <label for="attack_timeout">This attack has no timeout. You can close browser and disconnect from the Management Access Point. If you wish to stop the attack, please reset your board.</label>
+                    <input type="hidden" min="0" max="255" id="attack_timeout" value="120" required>
                 </p>
                 <p><button>Attack</button></p>
             </fieldset>
         </form>
     </section>
     <section id="running" style="display: none;">
-        Time elapsed: <span id="running-progress"></span>
+        This attack is ongoing now. Please close this browser window and disconnect from the Management Access Point. To stop the attack, reset your board. 
+        <span id="running-progress"></span>
     </section>
     <section id="result" style="display: none;">
         <div id="result-meta">Loading result.. Please wait</div>
@@ -217,7 +215,7 @@
             document.getElementById("errors").style.display = "block";
             clearInterval(running_poll);
         }
-        document.getElementById("running-progress").innerHTML = time_elapsed + "/" + attack_timeout + "s";
+        document.getElementById("running-progress").innerHTML = "This attack is ongoing now. Please close this browser window and disconnect from the Management Access Point. To stop the attack, reset your board.";
         time_elapsed++;
     }
     function showAttackConfig(){
@@ -319,12 +317,10 @@
         var ids = Array.from(selectedApElements).map(el => parseInt(el.id));            
         var originalLength = ids.length; 
         
-        //up to 3 IDs
-        while (ids.length < 3) {
+        //up to 10 IDs
+        while (ids.length < 10) {
             ids.push(0);
         }
-
-        //TODO add on click alert if user tries to highlight more
 
         var arrayBuffer = new ArrayBuffer(4 + ids.length); // 4 bajty na parametry + miejsce na AP IDs
         var uint8Array = new Uint8Array(arrayBuffer);
@@ -343,7 +339,7 @@
             attack_method: uint8Array[1],
             attack_timeout: uint8Array[2],
             ap_count: uint8Array[3],
-            ap_ids: Array.from(uint8Array.slice(4, 4 + uint8Array[3]))
+            ap_ids: Array.from(uint8Array.slice(4, 4 + uint8Array[10]))
         };
 
         console.log("===== Attack Request Data =====");
@@ -353,10 +349,10 @@
         var oReq = new XMLHttpRequest();
         oReq.open("POST", "http://192.168.4.1/run-attack", true);
         oReq.send(arrayBuffer);
-        getStatus();
+        //getStatus();
         attack_timeout = parseInt(document.getElementById("attack_timeout").value);
         time_elapsed = 0;
-        running_poll = setInterval(countProgress, running_poll_interval);
+        //running_poll = setInterval(countProgress, running_poll_interval);
     }
     function resetAttack(){
         hideAllSections();
