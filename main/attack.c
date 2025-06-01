@@ -106,20 +106,20 @@ void log_attack_request(const attack_request_t *request) {
     //ESP_LOGI(TAG, "Raw Request Data:");
     //ESP_LOG_BUFFER_HEX(TAG, (const void*)request, sizeof(attack_request_t));
 
-    ESP_LOGI(TAG, "===== Attack Request =====");
-    ESP_LOGI(TAG, "Number of APs: %d", request->num_aps);
-    ESP_LOGI(TAG, "Attack Type: %d", request->type);
-    ESP_LOGI(TAG, "Attack Method: %d", request->method);
-    ESP_LOGI(TAG, "Timeout: %d seconds", request->timeout);
+    //ESP_LOGI(TAG, "===== Attack Request =====");
+    //ESP_LOGI(TAG, "Number of APs: %d", request->num_aps);
+    //ESP_LOGI(TAG, "Attack Type: %d", request->type);
+    //ESP_LOGI(TAG, "Attack Method: %d", request->method);
+    //ESP_LOGI(TAG, "Timeout: %d seconds", request->timeout);
 
-    if (request->num_aps > 0) {
-        ESP_LOGI(TAG, "AP IDs:");
-        for (uint8_t i = 0; i < request->num_aps; i++) {
-            ESP_LOGI(TAG, "  AP ID[%d]: %d", i, request->ap_ids[i]);
-        }
-    } else {
-        ESP_LOGI(TAG, "AP IDs: NULL or empty");
-    }
+    // if (request->num_aps > 0) {
+    //     ESP_LOGI(TAG, "AP IDs:");
+    //     for (uint8_t i = 0; i < request->num_aps; i++) {
+    //         ESP_LOGI(TAG, "  AP ID[%d]: %d", i, request->ap_ids[i]);
+    //     }
+    // } else {
+    //     ESP_LOGI(TAG, "AP IDs: NULL or empty");
+    // }
 }
 
 void log_attack_config(const attack_config_t *config) {
@@ -142,18 +142,6 @@ void log_attack_config(const attack_config_t *config) {
 }
 
 
-// void log_attack_config(const attack_config_t *config) {
-//     if (!config) {
-//         ESP_LOGI(TAG, "log_attack_config attack_config_t is NULL");
-//         return;
-//     }
-
-//     ESP_LOGI(TAG, "===== Attack Config =====");
-//     ESP_LOGI(TAG, "Attack Type: %d", config->type);
-//     ESP_LOGI(TAG, "Attack Method: %d", config->method);
-//     ESP_LOGI(TAG, "Timeout: %d seconds", config->timeout);
-// }
-
 /**
  * @brief Callback for WEBSERVER_EVENT_ATTACK_REQUEST event.
  * 
@@ -174,73 +162,25 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
 
     attack_request_t *attack_request = (attack_request_t *) event_data;
 
-    ESP_LOGI(TAG, "Number of APs: %d", attack_request->num_aps); 
-    ESP_LOGI(TAG, "First ID: %d", attack_request->ap_ids[0]);
-    ESP_LOGI(TAG, "Second ID: %d", attack_request->ap_ids[1]);
-
-    ESP_LOGI(TAG, "Starting attack... 1");
-
-    int size_ = sizeof(attack_request_t);
-
-    ESP_LOGI(TAG, "Starting attack... 2");
-
-    //ESP_LOGI(TAG, "Rozmiar attack_request_t: %d", size_); 
-
-    // Wydrukowanie surowych bajtów event_data w formie hex
-    //ESP_LOG_BUFFER_HEX(TAG, event_data, size_);
-
-    // Opcjonalnie, jeśli chcesz zobaczyć bajty jako znaki
-    //ESP_LOG_BUFFER_CHAR(TAG, event_data, size_);
-
-    //log_attack_request(attack_request);
-
     attack_config_t attack_config = { .type = attack_request->type, .method = attack_request->method, .timeout = attack_request->timeout };
-    //attack_config.ap_record = wifictl_get_ap_record(attack_request->ap_record_id);
     attack_config.actualAmount = attack_request->num_aps;
 
-    ESP_LOGI(TAG, "Starting attack... 3a");
     vTaskDelay(pdMS_TO_TICKS(500));
-
-    //log_attack_config (&attack_config);
-
-    ESP_LOGI(TAG, "Starting attack... 4a");
-
-    vTaskDelay(pdMS_TO_TICKS(500));
-        ESP_LOGI(TAG, "Starting attack... 5a");
 
     for (int i = 0; i < attack_request->num_aps; i++) {
-        vTaskDelay(pdMS_TO_TICKS(500));
-        ESP_LOGI(TAG, "Iteration index i: %d", i);
-        vTaskDelay(pdMS_TO_TICKS(500));
-        ESP_LOGI(TAG, "AP ID from attack_request->ap_ids[%d]: %d", i, attack_request->ap_ids[i]);
-        vTaskDelay(pdMS_TO_TICKS(500));
         wifi_ap_record_t *ap_record = wifictl_get_ap_record(attack_request->ap_ids[i]);
-        vTaskDelay(pdMS_TO_TICKS(500));
         if (ap_record) {
             attack_config.ap_records[i] = *ap_record;
-            ESP_LOGI(TAG, "Stored AP Record [%d]: SSID: %s, RSSI: %d", i, ap_record->ssid, ap_record->rssi);
+            //ESP_LOGI(TAG, "Stored AP Record [%d]: SSID: %s, RSSI: %d", i, ap_record->ssid, ap_record->rssi);
         } else {
             ESP_LOGE(TAG, "wifictl_get_ap_record() returned NULL for AP ID %d", attack_request->ap_ids[i]);
         }
     }
 
-
-    // for (int i = 0; i < attack_request->num_aps; i++) {
-    //     attack_config.ap_records[i] = *wifictl_get_ap_record(attack_request->ap_ids[i]);
-    // }
-
     log_attack_config (&attack_config);
 
     attack_status.state = RUNNING;
     attack_status.type = attack_config.type;
-
-    //TODO if(attack_config.ap_record == NULL){
-        //ESP_LOGE(TAG, "NPE: No attack_config.ap_record!");
-        //return;
-    //}
-    
-    // NO TIMEOUT 
-    // ESP_ERROR_CHECK(esp_timer_start_once(attack_timeout_handle, attack_config.timeout * 1000000));
     
     // start attack based on it's type
     switch(attack_config.type) {
@@ -259,8 +199,6 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
         default:
             ESP_LOGE(TAG, "Unknown attack type!");
     }
-
-    //free(attack_request); 
 
 }
 

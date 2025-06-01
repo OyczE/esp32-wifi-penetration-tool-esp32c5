@@ -119,71 +119,32 @@ static httpd_uri_t uri_ap_list_get = {
  */
 static esp_err_t uri_run_attack_post_handler(httpd_req_t *req) {
 
-    // Alokuj pamięć dynamicznie
+    // Dynamic memory allocation
     attack_request_t *attack_request_deb = malloc(sizeof(attack_request_t));
     if (attack_request_deb == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for attack_request_deb!");
         return ESP_FAIL;
     }
 
-    // Odbierz dane z żądania HTTP
+    // Receive data from HTTP request
     char buffer[128];
     int recv_size = httpd_req_recv(req, buffer, sizeof(buffer));
     
     ESP_LOGI(TAG, "recv_size: %d", recv_size);
     if (recv_size > 0) {
         ESP_LOG_BUFFER_HEX(TAG, buffer, recv_size);
-        memcpy(attack_request_deb, buffer, sizeof(attack_request_t)); // Skopiuj dane do zaalokowanej pamięci
+        memcpy(attack_request_deb, buffer, sizeof(attack_request_t)); // Copy data to allocated memory
     } else {
         ESP_LOGE(TAG, "Failed to receive data");
-        free(attack_request_deb);  // Zwolnij pamięć, jeśli coś poszło nie tak
+        free(attack_request_deb);  // Free memory if something goes wrong
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "Number of APs attack_request_deb v2: %d", attack_request_deb->num_aps); 
-    ESP_LOGI(TAG, "First ID attack_request_deb v2: %d", attack_request_deb->ap_ids[0]);
-    ESP_LOGI(TAG, "Second ID attack_request_deb v2: %d", attack_request_deb->ap_ids[1]);
-
-    // Wyślij event z poprawnie zaalokowaną strukturą
+    // Sent a new event with an allocated structure:
     esp_err_t res = httpd_resp_send(req, NULL, 0);
     ESP_ERROR_CHECK(esp_event_post(WEBSERVER_EVENTS, WEBSERVER_EVENT_ATTACK_REQUEST, attack_request_deb, sizeof(attack_request_t), portMAX_DELAY));
 
-    return res; // Pamiętaj, że odbiorca eventu musi zwolnić pamięć!
-
-
-/*
-    char buffer[128];  // Alokuj bufor na odbiór danych
-    
-    int recv_size = httpd_req_recv(req, buffer, sizeof(buffer));
-
-    ESP_LOGI(TAG, "recv_size: %d", recv_size); 
-
-    if (recv_size > 0) {
-        ESP_LOG_BUFFER_HEX(TAG, buffer, recv_size);
-    } else {
-        ESP_LOGE(TAG, "Failed to receive data");
-    }
-
-    if (recv_size < sizeof(attack_request_t)) {
-        ESP_LOGE(TAG, "Received data is too small! Expected: %d, got: %d", 
-                sizeof(attack_request_t), recv_size);
-        return ESP_FAIL;
-    }
-
-
-    attack_request_t *attack_request_deb = (attack_request_t *) buffer;
-
-    ESP_LOGI(TAG, "Number of APs attack_request_deb: %d", attack_request_deb->num_aps); 
-    ESP_LOGI(TAG, "First ID attack_request_deb: %d", attack_request_deb->ap_ids[0]);
-    ESP_LOGI(TAG, "Second ID attack_request_deb: %d", attack_request_deb->ap_ids[1]);
-
-
-    //attack_request_t attack_request;
-    //httpd_req_recv(req, (char *)&attack_request, sizeof(attack_request_t));
-    esp_err_t res = httpd_resp_send(req, NULL, 0);
-    ESP_ERROR_CHECK(esp_event_post(WEBSERVER_EVENTS, WEBSERVER_EVENT_ATTACK_REQUEST, attack_request_deb, sizeof(attack_request_t), portMAX_DELAY));
     return res;
-    */
 }
 
 static httpd_uri_t uri_run_attack_post = {
@@ -192,7 +153,7 @@ static httpd_uri_t uri_run_attack_post = {
     .handler = uri_run_attack_post_handler,
     .user_ctx = NULL
 };
-//@}
+
 
 /**
  * @brief Handlers for \c /status endpoint
@@ -203,7 +164,7 @@ static httpd_uri_t uri_run_attack_post = {
  * @{
  */
 static esp_err_t uri_status_get_handler(httpd_req_t *req) {
-    ESP_LOGD(TAG, "Fetching attack status...");
+    //ESP_LOGD(TAG, "Fetching attack status...");
     const attack_status_t *attack_status;
     attack_status = attack_get_status();
 
@@ -223,7 +184,7 @@ static httpd_uri_t uri_status_get = {
     .handler = uri_status_get_handler,
     .user_ctx = NULL
 };
-//@}
+
 
 /**
  * @brief Handlers for \c /capture.pcap endpoint
@@ -271,13 +232,13 @@ static httpd_uri_t uri_capture_hccapx_get = {
     .handler = uri_capture_hccapx_get_handler,
     .user_ctx = NULL
 };
-//@}
+
 
 void webserver_run(){
     ESP_LOGD(TAG, "Running webserver");
 
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.recv_wait_timeout = 10; // Czas oczekiwania na odbiór
+    config.recv_wait_timeout = 10;
     httpd_handle_t server = NULL;
 
     ESP_ERROR_CHECK(httpd_start(&server, &config));

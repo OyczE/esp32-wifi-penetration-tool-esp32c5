@@ -29,19 +29,15 @@ void attack_dos_start(attack_config_t *attack_config) {
             for (int i=0; i< attack_config->actualAmount; i++) {
                 ESP_LOGI(TAG, "About to invoke ATTACK_DOS_METHOD_BROADCAST 4 SSID: %s", attack_config->ap_records[i].ssid);
                 ESP_LOGI(TAG, "Channel is: %d", attack_config->ap_records[i].primary);
-            }
-            ESP_LOGI(TAG, "Integrity check before function call:");
-            for (int i = 0; i < attack_config->actualAmount; i++) {
-                ESP_LOGI(TAG, "SSID: %s, Channel: %d", attack_config->ap_records[i].ssid, attack_config->ap_records[i].primary);
-            }
+            }            
             attack_method_broadcast_multiple_ap(attack_config->ap_records, attack_config->actualAmount, 1);
             break;
         case ATTACK_DOS_METHOD_ROGUE_AP:
-            ESP_LOGD(TAG, "ATTACK_DOS_METHOD_ROGUE_AP");
+            ESP_LOGE(TAG, "ATTACK_DOS_METHOD_ROGUE_AP DISABLED");
             //TODO fix me attack_method_rogueap(attack_config->ap_record);
             break;
         case ATTACK_DOS_METHOD_COMBINE_ALL:
-            ESP_LOGD(TAG, "ATTACK_DOS_METHOD_ROGUE_AP");
+            ESP_LOGE(TAG, "ATTACK_DOS_METHOD_ROGUE_AP DISABLED");
             //TODO fix me attack_method_rogueap(attack_config->ap_record);
             //TODO fix me attack_method_broadcast(attack_config->ap_record, 1);
             break;

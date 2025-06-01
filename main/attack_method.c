@@ -39,13 +39,13 @@ static void timer_send_deauth_frame_multiple_aps(void *arg){
     WifiApList * wifiApList = (WifiApList *) arg;
 
     if (wifiApList == NULL || wifiApList->ap_records == NULL) {
-        ESP_LOGW(TAG, "Brak danych do wypisania.");
+        ESP_LOGW(TAG, "No records.");
         return;
     }
 
-    ESP_LOGI(TAG, "Lista zapisanych punktów dostępowych (%zu):", wifiApList->count);
+    ESP_LOGI(TAG, "APs list (%zu):", wifiApList->count);
     for (size_t i = 0; i < wifiApList->count; i++) {
-        ESP_LOGI(TAG, "AP %zu: SSID: %s, Kanał: %d", 
+        ESP_LOGI(TAG, "AP %zu: SSID: %s, channel: %d", 
                  i + 1, 
                  (char*) wifiApList->ap_records[i].ssid, 
                  wifiApList->ap_records[i].primary);  
@@ -59,38 +59,26 @@ static void timer_send_deauth_frame_multiple_aps(void *arg){
  * Supports more than one AP in the same timer. Changes channels on the fly.
  */
 void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_recordss[], size_t count, unsigned period_sec){
-    ESP_LOGI(TAG, "attack_method_broadcast invoked!");
-    ESP_LOGI(TAG, "attack_method_broadcast invoked, count: %d", count);
-
-    for (size_t i = 0; i < count; i++) {
-
-        const wifi_ap_record_t *ap_recordP = &ap_recordss[i];  // Bez kopiowania
-        ESP_LOGI(TAG, "DEBUG BEFORE TIMER SSID: %s", ap_recordP->ssid);
-        ESP_LOGI(TAG, "DEBUG BEFORE TIMER CHANNEL: %d", ap_recordP->primary);
-        ESP_LOGI(TAG, "DEBUG BEFORE TIMER BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
-            ap_recordP->bssid[0], ap_recordP->bssid[1], ap_recordP->bssid[2],
-            ap_recordP->bssid[3], ap_recordP->bssid[4], ap_recordP->bssid[5]);
-    }
 
     WifiApList *ap_list = (WifiApList *) malloc(sizeof(WifiApList)); // Alokacja na stercie
     if (ap_list == NULL) {
-        ESP_LOGE(TAG, "Nie udało się przydzielić pamięci dla WifiApList!");
+        ESP_LOGE(TAG, "Not able to allocate memory for WifiApList!");
         return;
     }
 
-    // Alokujemy pamięć dla tablicy ap_records na stercie
+    // Allocating memory for ap_records
     ap_list->ap_records = (wifi_ap_record_t *) malloc(count * sizeof(wifi_ap_record_t));
     if (ap_list->ap_records == NULL) {
-        ESP_LOGE(TAG, "Nie udało się przydzielić pamięci dla ap_records!");
+        ESP_LOGE(TAG, "Not able to allocate memory for ap_records!");
         free(ap_list);
         return;
     }
 
-    // Kopiujemy zawartość tablicy `ap_recordss` do nowej pamięci
+    // Copy `ap_recordss` array to a new memory
     memcpy(ap_list->ap_records, ap_recordss, count * sizeof(wifi_ap_record_t));
-    ap_list->count = count; // Przypisujemy liczbę APs
+    ap_list->count = count;
 
-    ESP_LOGI(TAG, "Wylaczamy i resetujemy WIFI");
+    ESP_LOGW(TAG, "Resetting WIFI before attack starts to be able to get rid of connected stations and change channels.");
     esp_wifi_stop();
     esp_wifi_start();
 
