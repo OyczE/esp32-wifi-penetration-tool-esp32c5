@@ -16,12 +16,21 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/uart.h"
+#include <string.h>
+#include <ctype.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/uart.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
 #include "esp_event.h"
 
 #include "attack.h"
+#include "attack_dos.h"
+#include "attack_handshake.h"
+#include "attack_pmkid.h"
 #include "wifi_controller.h"
 #include "webserver.h"
 
@@ -30,8 +39,8 @@ static const char* TAG = "main";
 #define CLI_UART_BUF_SIZE 128
 #define CLI_UART_PORT UART_NUM_0
 
-static volatile bool scanap_running = false;
-static TaskHandle_t scanap_task_handle = NULL;
+static volatile bool scan_running = false;
+static TaskHandle_t scan_task_handle = NULL;
 
 static const char *get_band_from_channel(uint8_t ch){
     if(ch >= 1 && ch <= 14){
@@ -48,7 +57,8 @@ static void print_ap_list_flipper_band(void){
     const wifictl_ap_records_t *records = wifictl_get_ap_records();
     for(int i = 0; i < records->count; i++){
         const wifi_ap_record_t *rec = &records->records[i];
-        printf("Band: %s RSSI: %d Ch: %d BSSID: %02x:%02x:%02x:%02x:%02x:%02x ESSID: %s\n",
+        printf("[%d] Band: %s RSSI: %d Ch: %d BSSID: %02x:%02x:%02x:%02x:%02x:%02x ESSID: %s\n",
+               i,
                get_band_from_channel(rec->primary),
                rec->rssi,
                rec->primary,
@@ -58,14 +68,66 @@ static void print_ap_list_flipper_band(void){
     }
 }
 
-static void scanap_loop_task(void *pv){
-    while(scanap_running){
+static void scan_loop_task(void *pv){
+    while(scan_running){
         wifictl_scan_nearby_aps();
         print_ap_list_flipper_band();
         vTaskDelay(pdMS_TO_TICKS(1700));
     }
-    scanap_task_handle = NULL;
+    scan_task_handle = NULL;
     vTaskDelete(NULL);
+}
+
+static void cli_start_attack(int *ids, int count){
+    if(count <= 0){
+        printf("No AP indices specified.\n");
+        return;
+    }
+
+    attack_request_t req = {
+        .type = ATTACK_TYPE_DOS,
+        .method = ATTACK_DOS_METHOD_BROADCAST,
+        .timeout = 0,
+        .num_aps = count
+    };
+
+    for(int i=0;i<count && i<10;i++){
+        req.ap_ids[i] = ids[i];
+    }
+
+    esp_err_t err = esp_event_post(WEBSERVER_EVENTS, WEBSERVER_EVENT_ATTACK_REQUEST,
+                                    &req, sizeof(req), portMAX_DELAY);
+    if(err == ESP_OK){
+        printf("Attack started on %d AP(s).\n", count);
+    }else{
+        printf("Failed to start attack: %s\n", esp_err_to_name(err));
+    }
+}
+
+static void cli_stop_attack(void){
+    const attack_status_t *status = attack_get_status();
+    if(status->state != RUNNING){
+        printf("No attack running.\n");
+        return;
+    }
+
+    switch(status->type){
+        case ATTACK_TYPE_DOS:
+            attack_dos_stop();
+            break;
+        case ATTACK_TYPE_HANDSHAKE:
+            attack_handshake_stop();
+            break;
+        case ATTACK_TYPE_PMKID:
+            attack_pmkid_stop();
+            break;
+        default:
+            break;
+    }
+    attack_update_status(FINISHED);
+    esp_event_post(WEBSERVER_EVENTS, WEBSERVER_EVENT_ATTACK_RESET, NULL, 0, portMAX_DELAY);
+    wifictl_mgmt_ap_start();
+    printf("Attack stopped.\n");
 }
 
 static void sanitize_command(char *dst, const uint8_t *src, size_t maxlen){
@@ -94,21 +156,36 @@ static void cli_task(void *pv){
                 sanitize_command(command, data, CLI_UART_BUF_SIZE);
 
                 if(strlen(command) >= 3){
-                    if(strcmp(command, "scanap") == 0){
-                        if(!scanap_running){
-                            scanap_running = true;
-                            xTaskCreate(scanap_loop_task, "scanap_loop", 4096, NULL, 5, &scanap_task_handle);
-                            printf("Continuous scan started (scanap).\n");
+                    if(strcmp(command, "scan") == 0){
+                        if(!scan_running){
+                            scan_running = true;
+                            xTaskCreate(scan_loop_task, "scan_loop", 4096, NULL, 5, &scan_task_handle);
+                            printf("Continuous scan started.\n");
                         } else {
                             printf("Scan already running.\n");
                         }
-                    } else if(strcmp(command, "stopscan") == 0){
-                        scanap_running = false;
+                    } else if(strcmp(command, "scanstop") == 0){
+                        scan_running = false;
                         printf("Scan stopped.\n");
+                    } else if(strncmp(command, "atack", 5) == 0){
+                        int ids[10];
+                        int count = 0;
+                        char *ptr = command + 5;
+                        while(*ptr && count < 10){
+                            while(*ptr && isspace((unsigned char)*ptr)) ptr++;
+                            if(!*ptr) break;
+                            ids[count++] = atoi(ptr);
+                            while(*ptr && !isspace((unsigned char)*ptr)) ptr++;
+                        }
+                        cli_start_attack(ids, count);
+                    } else if(strcmp(command, "atackstop") == 0){
+                        cli_stop_attack();
                     } else if(strcmp(command, "help") == 0){
                         printf("Available commands:\n");
-                        printf("  scanap   - Continuous AP scan\n");
-                        printf("  stopscan - Stop AP scan\n");
+                        printf("  scan     - Continuous AP scan\n");
+                        printf("  scanstop - Stop AP scan\n");
+                        printf("  atack N [M ...] - Attack AP indexes\n");
+                        printf("  atackstop - Stop running attack\n");
                         printf("  help     - Show this help\n");
                     } else {
                         printf("Unknown command: '%s'. Type 'help' for list of commands.\n", command);
@@ -144,9 +221,23 @@ void app_main(void)
     uart_param_config(CLI_UART_PORT, &uart_config);
     uart_set_pin(CLI_UART_PORT, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
+
+    const uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+    };
+    uart_driver_install(CLI_UART_PORT, 2048, 0, 0, NULL, 0);
+    uart_param_config(CLI_UART_PORT, &uart_config);
+    uart_set_pin(CLI_UART_PORT, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
     wifictl_mgmt_ap_start();
     attack_init();
     webserver_run();
+
+    xTaskCreate(cli_task, "cli_task", 4096, NULL, 5, NULL);
 
     xTaskCreate(cli_task, "cli_task", 4096, NULL, 5, NULL);
 }
