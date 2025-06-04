@@ -16,6 +16,12 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/uart.h"
+#include <string.h>
+#include <ctype.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/uart.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
@@ -215,9 +221,23 @@ void app_main(void)
     uart_param_config(CLI_UART_PORT, &uart_config);
     uart_set_pin(CLI_UART_PORT, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
+
+    const uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity    = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+    };
+    uart_driver_install(CLI_UART_PORT, 2048, 0, 0, NULL, 0);
+    uart_param_config(CLI_UART_PORT, &uart_config);
+    uart_set_pin(CLI_UART_PORT, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
     wifictl_mgmt_ap_start();
     attack_init();
     webserver_run();
+
+    xTaskCreate(cli_task, "cli_task", 4096, NULL, 5, NULL);
 
     xTaskCreate(cli_task, "cli_task", 4096, NULL, 5, NULL);
 }
