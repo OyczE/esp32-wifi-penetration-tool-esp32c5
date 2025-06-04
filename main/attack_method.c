@@ -140,6 +140,6 @@ void attack_method_rogueap(const wifi_ap_record_t *ap_record){
             .max_connection = 1
         },
     };
-    mempcpy(ap_config.sta.ssid, ap_record->ssid, 32);
+    memcpy(ap_config.sta.ssid, ap_record->ssid, 32);
     wifictl_ap_start(&ap_config);
 }

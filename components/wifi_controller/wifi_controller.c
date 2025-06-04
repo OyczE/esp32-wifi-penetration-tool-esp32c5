@@ -96,7 +96,7 @@ void wifictl_sta_connect_to_ap(const wifi_ap_record_t *ap_record, const char pas
             .pmf_cfg.required = false
         },
     };
-    mempcpy(sta_wifi_config.sta.ssid, ap_record->ssid, 32);
+    memcpy(sta_wifi_config.sta.ssid, ap_record->ssid, 32);
 
     if(password != NULL){
         if(strlen(password) >= 64) {
