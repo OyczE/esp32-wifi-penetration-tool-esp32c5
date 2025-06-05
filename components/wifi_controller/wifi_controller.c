@@ -18,9 +18,15 @@ static const char* TAG = "wifi_controller";
 static bool wifi_init = false;
 static uint8_t original_mac_ap[6];
 
+/*
+ * Event handler placeholder for future Wi-Fi events.
+ * Currently not used but kept for potential extensions.
+ */
+#if 0
 static void wifi_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data){
 
 }
+#endif
 
 /**
  * @brief Initializes Wi-Fi interface into APSTA mode and starts it.
