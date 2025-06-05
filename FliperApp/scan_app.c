@@ -3,6 +3,7 @@
 #include <input/input.h>
 #include <string.h>
 #include <furi_hal.h>
+#include <furi_hal_uart.h>
 
 typedef struct {
     bool scanning;
@@ -46,6 +47,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
 }
 
 int32_t scan_app(void* p) {
+    (void)p;
     ScanApp app = {.scanning=false, .stop_requested=false, .exit_app=false};
 
     Gui* gui = furi_record_open(RECORD_GUI);
