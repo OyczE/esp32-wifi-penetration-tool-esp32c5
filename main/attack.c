@@ -160,21 +160,20 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
 
     ESP_LOGI(TAG, "Starting attack...");
 
-    attack_request_t attack_request = *(attack_request_t *) event_data;
-    free(event_data);
+    const attack_request_t *attack_request = (const attack_request_t *) event_data;
 
-    attack_config_t attack_config = { .type = attack_request.type, .method = attack_request.method, .timeout = attack_request.timeout };
-    attack_config.actualAmount = attack_request.num_aps;
+    attack_config_t attack_config = { .type = attack_request->type, .method = attack_request->method, .timeout = attack_request->timeout };
+    attack_config.actualAmount = attack_request->num_aps;
 
     vTaskDelay(pdMS_TO_TICKS(500));
 
-    for (int i = 0; i < attack_request.num_aps; i++) {
-        wifi_ap_record_t *ap_record = wifictl_get_ap_record(attack_request.ap_ids[i]);
+    for (int i = 0; i < attack_request->num_aps; i++) {
+        wifi_ap_record_t *ap_record = wifictl_get_ap_record(attack_request->ap_ids[i]);
         if (ap_record) {
             attack_config.ap_records[i] = *ap_record;
             //ESP_LOGI(TAG, "Stored AP Record [%d]: SSID: %s, RSSI: %d", i, ap_record->ssid, ap_record->rssi);
         } else {
-            ESP_LOGE(TAG, "wifictl_get_ap_record() returned NULL for AP ID %d", attack_request.ap_ids[i]);
+            ESP_LOGE(TAG, "wifictl_get_ap_record() returned NULL for AP ID %d", attack_request->ap_ids[i]);
         }
     }
 
