@@ -65,6 +65,9 @@ static void print_ap_list_flipper_band(void){
 static void scan_loop_task(void *pv){
     while(scan_running){
         wifictl_scan_nearby_aps();
+        if(!scan_running){
+            break;
+        }
         print_ap_list_flipper_band();
         vTaskDelay(pdMS_TO_TICKS(1700));
     }

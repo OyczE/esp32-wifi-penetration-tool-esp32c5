@@ -168,7 +168,7 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
     vTaskDelay(pdMS_TO_TICKS(500));
 
     for (int i = 0; i < attack_request->num_aps; i++) {
-        wifi_ap_record_t *ap_record = wifictl_get_ap_record(attack_request->ap_ids[i]);
+        const wifi_ap_record_t *ap_record = wifictl_get_ap_record(attack_request->ap_ids[i]);
         if (ap_record) {
             attack_config.ap_records[i] = *ap_record;
             //ESP_LOGI(TAG, "Stored AP Record [%d]: SSID: %s, RSSI: %d", i, ap_record->ssid, ap_record->rssi);
