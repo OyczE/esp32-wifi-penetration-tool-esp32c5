@@ -121,8 +121,17 @@ void attack_method_broadcast(const wifi_ap_record_t *ap_record, unsigned period_
 }
 
 void attack_method_broadcast_stop(){
-    ESP_ERROR_CHECK(esp_timer_stop(deauth_timer_handle));
-    esp_timer_delete(deauth_timer_handle);
+    if (deauth_timer_handle) {
+        esp_err_t err = esp_timer_stop(deauth_timer_handle);
+        if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+            ESP_LOGE(TAG, "Failed to stop deauth timer: %s", esp_err_to_name(err));
+        }
+        err = esp_timer_delete(deauth_timer_handle);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to delete deauth timer: %s", esp_err_to_name(err));
+        }
+        deauth_timer_handle = NULL;
+    }
     if(allocated_ap_list){
         free(allocated_ap_list->ap_records);
         free(allocated_ap_list);
