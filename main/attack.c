@@ -160,7 +160,7 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
 
     ESP_LOGI(TAG, "Starting attack...");
 
-    attack_request_t *attack_request = (attack_request_t *) event_data;
+    const attack_request_t *attack_request = (const attack_request_t *) event_data;
 
     attack_config_t attack_config = { .type = attack_request->type, .method = attack_request->method, .timeout = attack_request->timeout };
     attack_config.actualAmount = attack_request->num_aps;
@@ -181,6 +181,11 @@ static void attack_request_handler(void *args, esp_event_base_t event_base, int3
 
     attack_status.state = RUNNING;
     attack_status.type = attack_config.type;
+
+    if(attack_config.timeout > 0){
+        ESP_LOGD(TAG, "Starting timeout timer for %d seconds", attack_config.timeout);
+        ESP_ERROR_CHECK(esp_timer_start_once(attack_timeout_handle, attack_config.timeout * 1000000ULL));
+    }
     
     // start attack based on it's type
     switch(attack_config.type) {

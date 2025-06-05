@@ -9,6 +9,7 @@
 #include "attack_method.h"
 
 #include <string.h>
+#include <stdlib.h>
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
 #include "esp_err.h"
@@ -20,6 +21,7 @@
 
 static const char *TAG = "main:attack_method";
 static esp_timer_handle_t deauth_timer_handle;
+static WifiApList *allocated_ap_list = NULL;
 
 /**
  * @brief Callback for periodic deauthentication frame timer
@@ -60,7 +62,7 @@ static void timer_send_deauth_frame_multiple_aps(void *arg){
  */
 void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_recordss[], size_t count, unsigned period_sec){
 
-    WifiApList *ap_list = (WifiApList *) malloc(sizeof(WifiApList)); // Alokacja na stercie
+    WifiApList *ap_list = (WifiApList *) malloc(sizeof(WifiApList));
     if (ap_list == NULL) {
         ESP_LOGE(TAG, "Not able to allocate memory for WifiApList!");
         return;
@@ -77,6 +79,7 @@ void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_recordss[], s
     // Copy `ap_recordss` array to a new memory
     memcpy(ap_list->ap_records, ap_recordss, count * sizeof(wifi_ap_record_t));
     ap_list->count = count;
+    allocated_ap_list = ap_list;
 
     ESP_LOGW(TAG, "Resetting WIFI before attack starts to be able to get rid of connected stations and change channels.");
     esp_wifi_stop();
@@ -120,6 +123,11 @@ void attack_method_broadcast(const wifi_ap_record_t *ap_record, unsigned period_
 void attack_method_broadcast_stop(){
     ESP_ERROR_CHECK(esp_timer_stop(deauth_timer_handle));
     esp_timer_delete(deauth_timer_handle);
+    if(allocated_ap_list){
+        free(allocated_ap_list->ap_records);
+        free(allocated_ap_list);
+        allocated_ap_list = NULL;
+    }
 }
 
 /**
