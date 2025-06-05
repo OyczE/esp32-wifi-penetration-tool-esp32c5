@@ -36,8 +36,11 @@ void attack_update_status(attack_state_t state) {
     attack_status.state = state;
     if(state == FINISHED) {
         ESP_LOGD(TAG, "Stopping attack timeout timer");
-        ESP_ERROR_CHECK(esp_timer_stop(attack_timeout_handle));
-    } 
+        esp_err_t err = esp_timer_stop(attack_timeout_handle);
+        if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+            ESP_LOGE(TAG, "Failed to stop timer: %s", esp_err_to_name(err));
+        }
+    }
 }
 
 void attack_append_status_content(uint8_t *buffer, unsigned size){
