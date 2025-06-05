@@ -1,0 +1,7 @@
+App(
+    appid: "scan_app",
+    name: "Scan UART",
+    entry_point: scan_app,
+    stack_size: 1024,
+    icon: "icon.png"
+)
