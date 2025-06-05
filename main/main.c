@@ -134,7 +134,8 @@ static void cli_stop_attack(void){
 static void sanitize_command(char *dst, const uint8_t *src, size_t maxlen){
     size_t pos = 0;
     for(size_t i = 0; src[i] && pos < maxlen - 1; ++i){
-        if(isalnum(src[i]) || src[i] == '_' || src[i] == '-' || src[i] == '.'){
+        if(isalnum(src[i]) || src[i] == '_' || src[i] == '-' ||
+           src[i] == '.' || isspace((unsigned char)src[i])){
             dst[pos++] = src[i];
         }
     }
