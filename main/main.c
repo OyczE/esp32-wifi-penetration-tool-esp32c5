@@ -174,6 +174,8 @@ static void cli_task(void *pv){
                         scan_running = false;
                         attack_dos_stop();
                         printf("Scan stopped.\n");
+                    } else if(strcmp(command, "atackstop") == 0){
+                        cli_stop_attack();
                     } else if(strncmp(command, "atack", 5) == 0){
                         int ids[10];
                         int count = 0;
@@ -185,8 +187,6 @@ static void cli_task(void *pv){
                             while(*ptr && !isspace((unsigned char)*ptr)) ptr++;
                         }
                         cli_start_attack(ids, count);
-                    } else if(strcmp(command, "atackstop") == 0){
-                        cli_stop_attack();
                     } else if(strcmp(command, "help") == 0){
                         printf("Available commands:\n");
                         printf("  scan     - Continuous AP scan\n");
