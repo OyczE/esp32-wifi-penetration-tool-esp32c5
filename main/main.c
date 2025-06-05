@@ -78,7 +78,13 @@ static void cli_start_attack(int *ids, int count){
         return;
     }
 
-    attack_request_t req = {
+    attack_request_t *req = malloc(sizeof(attack_request_t));
+    if(!req){
+        printf("Failed to allocate memory for attack request.\n");
+        return;
+    }
+
+    *req = (attack_request_t){
         .type = ATTACK_TYPE_DOS,
         .method = ATTACK_DOS_METHOD_BROADCAST,
         .timeout = 0,
@@ -86,11 +92,12 @@ static void cli_start_attack(int *ids, int count){
     };
 
     for(int i=0;i<count && i<10;i++){
-        req.ap_ids[i] = ids[i];
+        req->ap_ids[i] = ids[i];
     }
 
     esp_err_t err = esp_event_post(WEBSERVER_EVENTS, WEBSERVER_EVENT_ATTACK_REQUEST,
-                                    &req, sizeof(req), portMAX_DELAY);
+                                    req, sizeof(*req), portMAX_DELAY);
+    free(req);
     if(err == ESP_OK){
         printf("Attack started on %d AP(s).\n", count);
     }else{

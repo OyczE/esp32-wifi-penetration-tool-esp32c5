@@ -50,6 +50,7 @@ void attack_dos_stop() {
     switch(method){
         case ATTACK_DOS_METHOD_BROADCAST:
             attack_method_broadcast_stop();
+            wifictl_mgmt_ap_start();
             break;
         case ATTACK_DOS_METHOD_ROGUE_AP:
             wifictl_mgmt_ap_start();
