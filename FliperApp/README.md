@@ -20,7 +20,7 @@ Shows list of selected targets.
 
 ### Targets screen
 
-Shows up to six networks at once. Use **UP**/**DOWN** to move the cursor – the list scrolls automatically. Press **OK** to toggle selection of a network. Selected entries are marked with `*`. **BACK** returns to the menu.
+Shows up to five networks at once. Use **UP**/**DOWN** to move the cursor – the list scrolls automatically. Press **OK** to toggle selection of a network. Selected entries are marked with `*`. **BACK** returns to the menu.
 
 The application communicates over UART using the default Flipper settings. It automatically reboots the ESP32 and clears pending console output on start so no stray characters are sent.
 

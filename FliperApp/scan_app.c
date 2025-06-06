@@ -5,6 +5,9 @@
 #include <furi_hal.h>
 #include <furi_hal_serial.h>
 
+#define TARGET_VISIBLE_LINES 5
+#define TARGET_DISPLAY_CHARS 21
+
 // strncat is disabled in Flipper firmware API, so implement a minimal
 // replacement similar to BSD strlcat for safe string concatenation.
 static size_t safe_strlcat(char* dst, const char* src, size_t dstsize) {
@@ -33,6 +36,7 @@ typedef struct {
     uint8_t menu_index;
     uint8_t target_scroll;    // index of first visible item
     int selected_target;      // index of highlighted item
+    uint8_t target_name_offset; // horizontal scroll position
     bool target_selected[32]; // selected for attack
     uint8_t network_count;
     char networks[32][48];
@@ -118,13 +122,26 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
             canvas_draw_str(canvas, 2, 12, "No targets");
             canvas_draw_str(canvas, 2, 24, "Back");
         } else {
-            for(int i=0;i<6;i++) {
+            for(int i=0;i<TARGET_VISIBLE_LINES;i++) {
                 int idx = app->target_scroll + i;
                 if(idx >= app->network_count) break;
                 char line[64];
                 char arrow = (idx == app->selected_target) ? '>' : ' ';
                 char star = app->target_selected[idx] ? '*' : ' ';
-                snprintf(line, sizeof(line), "%c%c%s", arrow, star, app->networks[idx]);
+                const char* name = app->networks[idx];
+                size_t offset = 0;
+                if(idx == app->selected_target) {
+                    size_t len = strlen(name);
+                    if(len > TARGET_DISPLAY_CHARS - 2) {
+                        if(app->target_name_offset > len - (TARGET_DISPLAY_CHARS - 2)) {
+                            offset = len - (TARGET_DISPLAY_CHARS - 2);
+                        } else {
+                            offset = app->target_name_offset;
+                        }
+                        name = name + offset;
+                    }
+                }
+                snprintf(line, sizeof(line), "%c%c%.*s", arrow, star, TARGET_DISPLAY_CHARS - 2, name);
                 canvas_draw_str(canvas, 2, 12 + i*12, line);
             }
         }
@@ -144,7 +161,10 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             view_port_update(app->viewport);
         } else if(event->key == InputKeyOk) {
             if(app->menu_index == 0) app->screen = ScreenScan;
-            else if(app->menu_index == 1) app->screen = ScreenTargets;
+            else if(app->menu_index == 1) {
+                app->screen = ScreenTargets;
+                app->target_name_offset = 0;
+            }
             else if(app->menu_index == 2) app->screen = ScreenAttack;
             else {
                 const char* cmd = "reboot\n";
@@ -214,22 +234,26 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
         if(app->network_count == 0) {
             if(event->key == InputKeyBack) {
                 app->screen = ScreenMainMenu;
+                app->target_name_offset = 0;
                 view_port_update(app->viewport);
             }
         } else {
             if(event->key == InputKeyUp && app->selected_target > 0) {
                 app->selected_target--;
-                if(app->selected_target < app->target_scroll) app->target_scroll--; 
+                app->target_name_offset = 0;
+                if(app->selected_target < app->target_scroll) app->target_scroll--;
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyDown && app->selected_target < app->network_count - 1) {
                 app->selected_target++;
-                if(app->selected_target >= app->target_scroll + 6) app->target_scroll++;
+                app->target_name_offset = 0;
+                if(app->selected_target >= app->target_scroll + TARGET_VISIBLE_LINES) app->target_scroll++;
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyOk) {
                 app->target_selected[app->selected_target] = !app->target_selected[app->selected_target];
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyBack) {
                 app->screen = ScreenMainMenu;
+                app->target_name_offset = 0;
                 view_port_update(app->viewport);
             }
         }
@@ -246,6 +270,7 @@ int32_t scan_app(void* p) {
         .menu_index=0,
         .target_scroll=0,
         .selected_target=0,
+        .target_name_offset=0,
         .network_count=0,
         .line_pos=0,
         .screen=ScreenMainMenu,
@@ -279,7 +304,18 @@ int32_t scan_app(void* p) {
     gui_add_view_port(gui, app.viewport, GuiLayerFullscreen);
 
     while(!app.exit_app) {
-        furi_delay_ms(10);
+        furi_delay_ms(100);
+        if(app.screen == ScreenTargets && app.network_count > 0) {
+            size_t len = strlen(app.networks[app.selected_target]);
+            if(len > TARGET_DISPLAY_CHARS - 2) {
+                if(app.target_name_offset >= len - (TARGET_DISPLAY_CHARS - 2)) {
+                    app.target_name_offset = 0;
+                } else {
+                    app.target_name_offset++;
+                }
+                view_port_update(app.viewport);
+            }
+        }
     }
 
     gui_remove_view_port(gui, app.viewport);
