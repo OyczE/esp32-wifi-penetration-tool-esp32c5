@@ -2,6 +2,7 @@
 #include <gui/gui.h>
 #include <input/input.h>
 #include <string.h>
+#include <stdio.h>
 #include <furi_hal.h>
 #include <furi_hal_serial.h>
 
