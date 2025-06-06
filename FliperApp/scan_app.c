@@ -255,6 +255,21 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
                 app->target_scroll_tick = 0;
                 if(app->selected_target >= app->target_scroll + TARGET_VISIBLE_LINES) app->target_scroll++;
                 view_port_update(app->viewport);
+            } else if(event->key == InputKeyLeft) {
+                if(app->target_name_offset > 0) {
+                    app->target_name_offset--;
+                    app->target_scroll_tick = 0;
+                    view_port_update(app->viewport);
+                }
+            } else if(event->key == InputKeyRight) {
+                size_t len = strlen(app->networks[app->selected_target]);
+                size_t max_offset = 0;
+                if(len > TARGET_DISPLAY_CHARS - 2) max_offset = len - (TARGET_DISPLAY_CHARS - 2);
+                if(app->target_name_offset < max_offset) {
+                    app->target_name_offset++;
+                    app->target_scroll_tick = 0;
+                    view_port_update(app->viewport);
+                }
             } else if(event->key == InputKeyOk) {
                 app->target_selected[app->selected_target] = !app->target_selected[app->selected_target];
                 view_port_update(app->viewport);
