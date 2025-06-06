@@ -6,7 +6,7 @@ App(
     stack_size=2 * 1024,
     fap_version="1.0",
     fap_author="Czech5",
-    fap_description="Send scan or attack commands over UART",
+    fap_description="Scan Wi-Fi and launch attacks via UART",
     fap_category="Tools",
     # fap_icon="icon.png",
 )

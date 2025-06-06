@@ -191,12 +191,17 @@ static void cli_task(void *pv){
                             while(*ptr && !isspace((unsigned char)*ptr)) ptr++;
                         }
                         cli_start_attack(ids, count);
+                    } else if(strcmp(command, "reboot") == 0){
+                        printf("Rebooting...\n");
+                        fflush(stdout);
+                        esp_restart();
                     } else if(strcmp(command, "help") == 0){
                         printf("Available commands:\n");
                         printf("  scan     - Continuous AP scan\n");
                         printf("  scanstop - Stop AP scan\n");
                         printf("  atack N [M ...] - Attack AP indexes\n");
                         printf("  atackstop - Stop running attack\n");
+                        printf("  reboot   - Restart ESP32\n");
                         printf("  help     - Show this help\n");
                     } else {
                         printf("Unknown command: '%s'. Type 'help' for list of commands.\n", command);

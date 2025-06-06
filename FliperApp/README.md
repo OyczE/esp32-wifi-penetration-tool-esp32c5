@@ -1,23 +1,27 @@
 # Flipper Zero ESP32 Tool
 
-This simple Flipper Zero application lets you send UART commands to a connected ESP32. It provides a menu with `Scan` and `Attack` actions.
+This simple Flipper Zero application lets you send UART commands to a connected ESP32. It provides a menu with `Scan`, `Attack` and `Targets` actions.
 
 ## Usage
 
-When launched, the app displays a menu with `Scan` and `Attack`. Use **UP**/**DOWN** to select an option and **OK** to enter it.
+When launched, the app displays a menu with `Scan`, `Attack` and `Targets`. Use **UP**/**DOWN** to select an option and **OK** to enter it. On startup a `reboot` command is sent to ensure a clean ESP32 console.
 
 ### Scan screen
 
-* **OK** – send `scan` command.
+* **OK** – send `scan` command and reset the network list.
 * **BACK** – stop with `scanstop` or return to the menu.
+* While scanning, the number of received networks is shown on screen.
 
 ### Attack screen
 
-* **OK** – send `attack` command.
-* **BACK** – stop with `attackstop` or return to the menu.
+* **OK** – send `atack N` for the selected target.
+* **BACK** – stop with `atackstop` or return to the menu.
 
-The application communicates over UART using the default Flipper settings.
-Any pending console output is cleared on start so no stray characters are sent to the ESP32.
+### Targets screen
+
+Shows the networks discovered during scan. Use **UP**/**DOWN** to highlight a network and **OK** to mark it for attacking. **BACK** returns to the menu.
+
+The application communicates over UART using the default Flipper settings. It automatically reboots the ESP32 and clears pending console output on start so no stray characters are sent.
 
 ## Building
 

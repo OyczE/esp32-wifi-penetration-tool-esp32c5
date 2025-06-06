@@ -29,4 +29,16 @@ void furi_hal_serial_deinit(FuriHalSerialHandle* handle);
 void furi_hal_serial_tx(FuriHalSerialHandle* handle, const uint8_t* data, size_t length);
 void furi_hal_serial_set_br(FuriHalSerialHandle* handle, uint32_t baud);
 
+typedef enum {
+    FuriHalSerialRxEventData = (1 << 0),
+} FuriHalSerialRxEvent;
+
+typedef void (*FuriHalSerialAsyncRxCallback)(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, void* context);
+
+void furi_hal_serial_tx_wait_complete(FuriHalSerialHandle* handle);
+void furi_hal_serial_async_rx_start(FuriHalSerialHandle* handle, FuriHalSerialAsyncRxCallback cb, void* context, bool report_errors);
+void furi_hal_serial_async_rx_stop(FuriHalSerialHandle* handle);
+bool furi_hal_serial_async_rx_available(FuriHalSerialHandle* handle);
+uint8_t furi_hal_serial_async_rx(FuriHalSerialHandle* handle);
+
 #endif // FURI_HAL_SERIAL_H
