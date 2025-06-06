@@ -12,12 +12,21 @@ typedef enum {
     FuriHalSerialIdMax,
 } FuriHalSerialId;
 
+typedef enum {
+    FuriHalBusUSART1,
+    FuriHalBusLPUART1,
+    FuriHalBusMax,
+} FuriHalBus;
+
 typedef struct FuriHalSerialHandle FuriHalSerialHandle;
+
+bool furi_hal_bus_is_enabled(FuriHalBus bus);
 
 FuriHalSerialHandle* furi_hal_serial_control_acquire(FuriHalSerialId serial_id);
 void furi_hal_serial_control_release(FuriHalSerialHandle* handle);
 void furi_hal_serial_init(FuriHalSerialHandle* handle, uint32_t baud);
 void furi_hal_serial_deinit(FuriHalSerialHandle* handle);
 void furi_hal_serial_tx(FuriHalSerialHandle* handle, const uint8_t* data, size_t length);
+void furi_hal_serial_set_br(FuriHalSerialHandle* handle, uint32_t baud);
 
 #endif // FURI_HAL_SERIAL_H

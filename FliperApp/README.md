@@ -27,3 +27,7 @@ For details on the manifest format see [App Manifests](https://github.com/flippe
 The `furi_hal_serial.h` header in this folder is a minimal stub providing only
 the few functions used by this example so it can be built outside the firmware
 tree.
+
+For a more advanced example of UART usage see the
+[uart_demo](https://github.com/jamisonderek/flipper-zero-tutorials/tree/main/gpio/uart_demo)
+project referenced in Flipper Zero community tutorials.

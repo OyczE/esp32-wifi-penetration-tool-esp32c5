@@ -55,7 +55,13 @@ int32_t scan_app(void* p) {
     if(!app.serial) {
         return 0; // Serial interface unavailable
     }
-    furi_hal_serial_init(app.serial, 115200);
+
+    bool init_serial = !furi_hal_bus_is_enabled(FuriHalBusUSART1);
+    if(init_serial) {
+        furi_hal_serial_init(app.serial, 115200);
+    } else {
+        furi_hal_serial_set_br(app.serial, 115200);
+    }
 
     Gui* gui = furi_record_open(RECORD_GUI);
     app.viewport = view_port_alloc();
@@ -72,7 +78,9 @@ int32_t scan_app(void* p) {
     furi_record_close(RECORD_GUI);
 
     if(app.serial) {
-        furi_hal_serial_deinit(app.serial);
+        if(init_serial) {
+            furi_hal_serial_deinit(app.serial);
+        }
         furi_hal_serial_control_release(app.serial);
     }
 
