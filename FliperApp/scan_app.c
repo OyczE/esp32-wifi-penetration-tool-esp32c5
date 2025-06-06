@@ -148,7 +148,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
         }
     } else if(app->screen == ScreenAttack) {
         if(event->key == InputKeyOk && !app->attacking && app->selected_target >= 0) {
-            char cmd[16];
+            char cmd[32];
             snprintf(cmd, sizeof(cmd), "attack %d\n", app->selected_target);
             furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
             furi_hal_serial_tx_wait_complete(app->serial);
