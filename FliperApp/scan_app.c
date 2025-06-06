@@ -5,6 +5,19 @@
 #include <furi_hal.h>
 #include <furi_hal_serial.h>
 
+// strncat is disabled in Flipper firmware API, so implement a minimal
+// replacement similar to BSD strlcat for safe string concatenation.
+static size_t safe_strlcat(char* dst, const char* src, size_t dstsize) {
+    size_t dlen = strlen(dst);
+    size_t slen = strlen(src);
+    if(dlen >= dstsize) return dstsize + slen;
+    size_t copy = dstsize - dlen - 1;
+    if(copy > slen) copy = slen;
+    memcpy(dst + dlen, src, copy);
+    dst[dlen + copy] = '\0';
+    return dlen + slen;
+}
+
 typedef enum {
     ScreenMainMenu,
     ScreenScan,
@@ -81,10 +94,10 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
             char list[64] = "";
             for(int i=0;i<app->network_count;i++) {
                 if(app->target_selected[i]) {
-                    if(count > 0) strncat(list, " ", sizeof(list)-strlen(list)-1);
+                    if(count > 0) safe_strlcat(list, " ", sizeof(list));
                     char buf[4];
                     snprintf(buf, sizeof(buf), "%d", i);
-                    strncat(list, buf, sizeof(list)-strlen(list)-1);
+                    safe_strlcat(list, buf, sizeof(list));
                     count++;
                 }
             }
@@ -175,11 +188,11 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
                 if(app->target_selected[i]) {
                     char buf[8];
                     snprintf(buf, sizeof(buf), " %d", i);
-                    strncat(cmd, buf, sizeof(cmd) - strlen(cmd) - 1);
+                    safe_strlcat(cmd, buf, sizeof(cmd));
                     count++;
                 }
             }
-            strncat(cmd, "\n", sizeof(cmd) - strlen(cmd) - 1);
+            safe_strlcat(cmd, "\n", sizeof(cmd));
             if(count > 0) {
                 furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
                 furi_hal_serial_tx_wait_complete(app->serial);
