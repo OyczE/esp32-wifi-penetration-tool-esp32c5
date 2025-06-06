@@ -6,7 +6,8 @@
 #include <furi_hal_serial.h>
 
 #define TARGET_VISIBLE_LINES 5
-#define TARGET_DISPLAY_CHARS 21
+#define TARGET_DISPLAY_CHARS 16
+#define SCROLL_STEP_DELAY 5
 
 // strncat is disabled in Flipper firmware API, so implement a minimal
 // replacement similar to BSD strlcat for safe string concatenation.
@@ -37,6 +38,7 @@ typedef struct {
     uint8_t target_scroll;    // index of first visible item
     int selected_target;      // index of highlighted item
     uint8_t target_name_offset; // horizontal scroll position
+    uint8_t target_scroll_tick; // delay counter for scrolling
     bool target_selected[32]; // selected for attack
     uint8_t network_count;
     char networks[32][48];
@@ -164,6 +166,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             else if(app->menu_index == 1) {
                 app->screen = ScreenTargets;
                 app->target_name_offset = 0;
+                app->target_scroll_tick = 0;
             }
             else if(app->menu_index == 2) app->screen = ScreenAttack;
             else {
@@ -235,17 +238,20 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             if(event->key == InputKeyBack) {
                 app->screen = ScreenMainMenu;
                 app->target_name_offset = 0;
+                app->target_scroll_tick = 0;
                 view_port_update(app->viewport);
             }
         } else {
             if(event->key == InputKeyUp && app->selected_target > 0) {
                 app->selected_target--;
                 app->target_name_offset = 0;
+                app->target_scroll_tick = 0;
                 if(app->selected_target < app->target_scroll) app->target_scroll--;
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyDown && app->selected_target < app->network_count - 1) {
                 app->selected_target++;
                 app->target_name_offset = 0;
+                app->target_scroll_tick = 0;
                 if(app->selected_target >= app->target_scroll + TARGET_VISIBLE_LINES) app->target_scroll++;
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyOk) {
@@ -254,6 +260,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             } else if(event->key == InputKeyBack) {
                 app->screen = ScreenMainMenu;
                 app->target_name_offset = 0;
+                app->target_scroll_tick = 0;
                 view_port_update(app->viewport);
             }
         }
@@ -271,6 +278,7 @@ int32_t scan_app(void* p) {
         .target_scroll=0,
         .selected_target=0,
         .target_name_offset=0,
+        .target_scroll_tick=0,
         .network_count=0,
         .line_pos=0,
         .screen=ScreenMainMenu,
@@ -308,12 +316,18 @@ int32_t scan_app(void* p) {
         if(app.screen == ScreenTargets && app.network_count > 0) {
             size_t len = strlen(app.networks[app.selected_target]);
             if(len > TARGET_DISPLAY_CHARS - 2) {
-                if(app.target_name_offset >= len - (TARGET_DISPLAY_CHARS - 2)) {
-                    app.target_name_offset = 0;
-                } else {
-                    app.target_name_offset++;
+                if(app.target_scroll_tick++ >= SCROLL_STEP_DELAY) {
+                    app.target_scroll_tick = 0;
+                    if(app.target_name_offset >= len - (TARGET_DISPLAY_CHARS - 2)) {
+                        app.target_name_offset = 0;
+                    } else {
+                        app.target_name_offset++;
+                    }
+                    view_port_update(app.viewport);
                 }
-                view_port_update(app.viewport);
+            } else {
+                app.target_name_offset = 0;
+                app.target_scroll_tick = 0;
             }
         }
     }
