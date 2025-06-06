@@ -6,7 +6,8 @@
 #include <furi_hal_serial.h>
 
 #define TARGET_VISIBLE_LINES 5
-#define TARGET_DISPLAY_CHARS 16
+// Display width in characters including cursor and selection marker
+#define TARGET_DISPLAY_CHARS 21
 #define SCROLL_STEP_DELAY 5
 
 // strncat is disabled in Flipper firmware API, so implement a minimal
