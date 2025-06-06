@@ -141,6 +141,9 @@ static void sanitize_command(char *dst, const uint8_t *src, size_t maxlen){
         if(isalnum(src[i]) || src[i] == '_' || src[i] == '-' ||
            src[i] == '.' || isspace((unsigned char)src[i])){
             dst[pos++] = src[i];
+        } else if(src[i] == ',' || src[i] == ':' || src[i] == ';'){
+            /* Treat common separators as spaces so "atack 1,2" works */
+            dst[pos++] = ' ';
         }
     }
     dst[pos] = '\0';
