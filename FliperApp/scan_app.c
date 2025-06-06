@@ -52,7 +52,9 @@ int32_t scan_app(void* p) {
     ScanApp app = {.scanning=false, .stop_requested=false, .exit_app=false, .serial=NULL};
 
     app.serial = furi_hal_serial_control_acquire(FuriHalSerialIdUsart);
-    furi_check(app.serial);
+    if(!app.serial) {
+        return 0; // Serial interface unavailable
+    }
     furi_hal_serial_init(app.serial, 115200);
 
     Gui* gui = furi_record_open(RECORD_GUI);
