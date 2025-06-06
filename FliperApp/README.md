@@ -1,6 +1,6 @@
 # Flipper Zero Scan App
 
-This simple Flipper Zero application provides a menu to start or stop a scan on a connected device via UART.
+This simple Flipper Zero application provides a menu to start or stop a scan on a connected ESP32 device via UART.
 
 ## Usage
 
@@ -11,8 +11,8 @@ The application communicates over UART using the default Flipper settings.
 
 ## Building
 
-1. Clone the official Flipper Zero firmware and set up `ufbt` as described in the firmware documentation.
-2. Copy this `FliperApp` folder into the firmware source tree or create a symlink.
+1. Clone the [official firmware repository](https://github.com/flipperdevices/flipperzero-firmware) and install `ufbt` as described in the [fbt documentation](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/fbt.md).
+2. Copy this `FliperApp` folder into the firmware's `applications_user` directory or create a symlink.
 3. From the firmware directory run:
 
    ```bash
@@ -22,6 +22,7 @@ The application communicates over UART using the default Flipper settings.
    The resulting `.fap` file will appear in `dist/apps/`.
 4. Copy the `.fap` to your Flipper's `apps/` directory using qFlipper or USB mass storage.
 
-The `furi_hal_uart.h` header in this folder is a minimal stub so the app can be
-built outside the firmware tree. When compiling within the official firmware
-source it will be ignored in favor of the SDK version.
+For details on the manifest format see [App Manifests](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/AppManifests.md). API documentation can be found in the [Flipper Doxygen pages](https://developer.flipper.net/flipperzero/doxygen/).
+
+The `furi_hal_serial.h` header in this folder is a minimal stub so the app can be
+built outside the firmware tree.

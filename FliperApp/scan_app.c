@@ -3,7 +3,7 @@
 #include <input/input.h>
 #include <string.h>
 #include <furi_hal.h>
-#include <furi_hal_uart.h>
+#include <furi_hal_serial.h>
 
 typedef struct {
     bool scanning;
@@ -31,13 +31,13 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
     if(event->type != InputTypeShort) return;
     if(event->key == InputKeyOk && !app->scanning) {
         const char* cmd = "scan\n";
-        furi_hal_uart_tx((const uint8_t*)cmd, strlen(cmd));
+        furi_hal_serial_tx((const uint8_t*)cmd, strlen(cmd));
         app->scanning = true;
         view_port_update(app->viewport);
     } else if(event->key == InputKeyBack) {
         if(app->scanning && !app->stop_requested) {
             const char* cmd = "scanstop\n";
-            furi_hal_uart_tx((const uint8_t*)cmd, strlen(cmd));
+            furi_hal_serial_tx((const uint8_t*)cmd, strlen(cmd));
             app->stop_requested = true;
             view_port_update(app->viewport);
         } else {
