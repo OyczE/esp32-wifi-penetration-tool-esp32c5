@@ -74,7 +74,7 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
         canvas_draw_str(canvas, 2, 12, app->menu_index == 0 ? "> Scan" : "  Scan");
         canvas_draw_str(canvas, 2, 24, app->menu_index == 1 ? "> Targets" : "  Targets");
         canvas_draw_str(canvas, 2, 36, app->menu_index == 2 ? "> Attack" : "  Attack");
-        canvas_draw_str(canvas, 2, 48, app->menu_index == 3 ? "> Raboot" : "  Raboot");
+        canvas_draw_str(canvas, 2, 48, app->menu_index == 3 ? "> Reboot" : "  Reboot");
     } else if(app->screen == ScreenScan) {
         char buf[32];
         if(!app->scanning) {
@@ -147,7 +147,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             else if(app->menu_index == 1) app->screen = ScreenTargets;
             else if(app->menu_index == 2) app->screen = ScreenAttack;
             else {
-                const char* cmd = "raboot\n";
+                const char* cmd = "reboot\n";
                 furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
                 furi_hal_serial_tx_wait_complete(app->serial);
             }
