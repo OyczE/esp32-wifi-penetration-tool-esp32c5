@@ -149,14 +149,14 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
     } else if(app->screen == ScreenAttack) {
         if(event->key == InputKeyOk && !app->attacking && app->selected_target >= 0) {
             char cmd[16];
-            snprintf(cmd, sizeof(cmd), "atack %d\n", app->selected_target);
+            snprintf(cmd, sizeof(cmd), "attack %d\n", app->selected_target);
             furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
             furi_hal_serial_tx_wait_complete(app->serial);
             app->attacking = true;
             view_port_update(app->viewport);
         } else if(event->key == InputKeyBack) {
             if(app->attacking) {
-                const char* cmd = "atackstop\n";
+                const char* cmd = "attackstop\n";
                 furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
                 furi_hal_serial_tx_wait_complete(app->serial);
                 app->attacking = false;

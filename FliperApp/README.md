@@ -14,8 +14,8 @@ When launched, the app displays a menu with `Scan`, `Attack` and `Targets`. Use 
 
 ### Attack screen
 
-* **OK** – send `atack N` for the selected target.
-* **BACK** – stop with `atackstop` or return to the menu.
+* **OK** – send `attack N` for the selected target.
+* **BACK** – stop with `attackstop` or return to the menu.
 
 ### Targets screen
 

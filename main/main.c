@@ -142,7 +142,7 @@ static void sanitize_command(char *dst, const uint8_t *src, size_t maxlen){
            src[i] == '.' || isspace((unsigned char)src[i])){
             dst[pos++] = src[i];
         } else if(src[i] == ',' || src[i] == ':' || src[i] == ';'){
-            /* Treat common separators as spaces so "atack 1,2" works */
+            /* Treat common separators as spaces so "attack 1,2" works */
             dst[pos++] = ' ';
         }
     }
@@ -176,14 +176,14 @@ static void cli_task(void *pv){
                     } else if(strcmp(command, "scanstop") == 0){
                         scan_running = false;
                         printf("Scan stopped.\n");
-                    } else if(strcmp(command, "atackstop") == 0){
+                    } else if(strcmp(command, "attackstop") == 0){
                         cli_stop_attack();
                         attack_dos_stop();
-                        printf("Atack stopped.\n");
-                    } else if(strncmp(command, "atack", 5) == 0){
+                        printf("Attack stopped.\n");
+                    } else if(strncmp(command, "attack", 6) == 0){
                         int ids[10];
                         int count = 0;
-                        char *ptr = command + 5;
+                        char *ptr = command + 6;
                         while(*ptr && count < 10){
                             while(*ptr && isspace((unsigned char)*ptr)) ptr++;
                             if(!*ptr) break;
@@ -199,8 +199,8 @@ static void cli_task(void *pv){
                         printf("Available commands:\n");
                         printf("  scan     - Continuous AP scan\n");
                         printf("  scanstop - Stop AP scan\n");
-                        printf("  atack N [M ...] - Attack AP indexes\n");
-                        printf("  atackstop - Stop running attack\n");
+                        printf("  attack N [M ...] - Attack AP indexes\n");
+                        printf("  attackstop - Stop running attack\n");
                         printf("  reboot   - Restart ESP32\n");
                         printf("  help     - Show this help\n");
                     } else {
