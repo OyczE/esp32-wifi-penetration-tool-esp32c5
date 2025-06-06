@@ -21,3 +21,7 @@ The application communicates over UART using the default Flipper settings.
 
    The resulting `.fap` file will appear in `dist/apps/`.
 4. Copy the `.fap` to your Flipper's `apps/` directory using qFlipper or USB mass storage.
+
+The `furi_hal_uart.h` header in this folder is a minimal stub so the app can be
+built outside the firmware tree. When compiling within the official firmware
+source it will be ignored in favor of the SDK version.
