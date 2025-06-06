@@ -17,6 +17,7 @@ When launched, the app displays a menu with `Scan` and `Attack`. Use **UP**/**DO
 * **BACK** – stop with `attackstop` or return to the menu.
 
 The application communicates over UART using the default Flipper settings.
+Any pending console output is cleared on start so no stray characters are sent to the ESP32.
 
 ## Building
 

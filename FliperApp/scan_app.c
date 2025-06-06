@@ -72,12 +72,14 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
         if(event->key == InputKeyOk && !app->scanning) {
             const char* cmd = "scan\n";
             furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
+            furi_hal_serial_tx_wait_complete(app->serial);
             app->scanning = true;
             view_port_update(app->viewport);
         } else if(event->key == InputKeyBack) {
             if(app->scanning && !app->stop_requested) {
                 const char* cmd = "scanstop\n";
                 furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
+                furi_hal_serial_tx_wait_complete(app->serial);
                 app->stop_requested = true;
             } else {
                 app->screen = ScreenMainMenu;
@@ -90,12 +92,14 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
         if(event->key == InputKeyOk && !app->attacking) {
             const char* cmd = "attack\n";
             furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
+            furi_hal_serial_tx_wait_complete(app->serial);
             app->attacking = true;
             view_port_update(app->viewport);
         } else if(event->key == InputKeyBack) {
             if(app->attacking) {
                 const char* cmd = "attackstop\n";
                 furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
+                furi_hal_serial_tx_wait_complete(app->serial);
                 app->attacking = false;
             } else {
                 app->screen = ScreenMainMenu;
@@ -125,7 +129,9 @@ int32_t scan_app(void* p) {
     if(init_serial) {
         furi_hal_serial_init(app.serial, 115200);
     } else {
-        furi_hal_serial_set_br(app.serial, 115200);
+        /* Reinitialize to clear any pending data from console */
+        furi_hal_serial_deinit(app.serial);
+        furi_hal_serial_init(app.serial, 115200);
     }
 
     Gui* gui = furi_record_open(RECORD_GUI);
@@ -143,9 +149,7 @@ int32_t scan_app(void* p) {
     furi_record_close(RECORD_GUI);
 
     if(app.serial) {
-        if(init_serial) {
-            furi_hal_serial_deinit(app.serial);
-        }
+        furi_hal_serial_deinit(app.serial);
         furi_hal_serial_control_release(app.serial);
     }
 
