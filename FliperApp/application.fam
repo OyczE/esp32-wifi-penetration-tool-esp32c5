@@ -1,12 +1,12 @@
 App(
     appid="scan_app",
-    name="Scan UART",
+    name="ESP32 Tool",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="scan_app",
     stack_size=2 * 1024,
     fap_version="1.0",
     fap_author="Czech5",
-    fap_description="Control ESP32 scanner over UART",
+    fap_description="Send scan or attack commands over UART",
     fap_category="Tools",
     # fap_icon="icon.png",
 )

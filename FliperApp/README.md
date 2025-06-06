@@ -1,11 +1,20 @@
-# Flipper Zero Scan App
+# Flipper Zero ESP32 Tool
 
-This simple Flipper Zero application provides a menu to start or stop a scan on a connected ESP32 device via UART.
+This simple Flipper Zero application lets you send UART commands to a connected ESP32. It provides a menu with `Scan` and `Attack` actions.
 
 ## Usage
 
+When launched, the app displays a menu with `Scan` and `Attack`. Use **UP**/**DOWN** to select an option and **OK** to enter it.
+
+### Scan screen
+
 * **OK** – send `scan` command.
-* **BACK** – first press sends `scanstop`, second press exits to the main menu.
+* **BACK** – stop with `scanstop` or return to the menu.
+
+### Attack screen
+
+* **OK** – send `attack` command.
+* **BACK** – stop with `attackstop` or return to the menu.
 
 The application communicates over UART using the default Flipper settings.
 
