@@ -18,8 +18,9 @@ typedef struct {
     bool exit_app;
     bool attacking;
     uint8_t menu_index;
-    uint8_t target_scroll;
-    int selected_target;
+    uint8_t target_scroll;    // index of first visible item
+    int selected_target;      // index of highlighted item
+    bool target_selected[32]; // selected for attack
     uint8_t network_count;
     char networks[32][48];
     char line_buf[48];
@@ -58,8 +59,9 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
 
     if(app->screen == ScreenMainMenu) {
         canvas_draw_str(canvas, 2, 12, app->menu_index == 0 ? "> Scan" : "  Scan");
-        canvas_draw_str(canvas, 2, 24, app->menu_index == 1 ? "> Attack" : "  Attack");
-        canvas_draw_str(canvas, 2, 36, app->menu_index == 2 ? "> Targets" : "  Targets");
+        canvas_draw_str(canvas, 2, 24, app->menu_index == 1 ? "> Targets" : "  Targets");
+        canvas_draw_str(canvas, 2, 36, app->menu_index == 2 ? "> Attack" : "  Attack");
+        canvas_draw_str(canvas, 2, 48, app->menu_index == 3 ? "> Raboot" : "  Raboot");
     } else if(app->screen == ScreenScan) {
         char buf[32];
         if(!app->scanning) {
@@ -75,12 +77,23 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
         }
     } else if(app->screen == ScreenAttack) {
         if(!app->attacking) {
-            if(app->selected_target >= 0) {
-                char buf[32];
-                snprintf(buf, sizeof(buf), "OK: attack %d", app->selected_target);
+            int count = 0;
+            char list[64] = "";
+            for(int i=0;i<app->network_count;i++) {
+                if(app->target_selected[i]) {
+                    if(count > 0) strncat(list, " ", sizeof(list)-strlen(list)-1);
+                    char buf[4];
+                    snprintf(buf, sizeof(buf), "%d", i);
+                    strncat(list, buf, sizeof(list)-strlen(list)-1);
+                    count++;
+                }
+            }
+            if(count > 0) {
+                char buf[80];
+                snprintf(buf, sizeof(buf), "OK: attack %s", list);
                 canvas_draw_str(canvas, 2, 12, buf);
             } else {
-                canvas_draw_str(canvas, 2, 12, "Select target first");
+                canvas_draw_str(canvas, 2, 12, "Select targets first");
             }
             canvas_draw_str(canvas, 2, 24, "Back");
         } else {
@@ -92,11 +105,13 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
             canvas_draw_str(canvas, 2, 12, "No targets");
             canvas_draw_str(canvas, 2, 24, "Back");
         } else {
-            for(int i=0;i<2;i++) {
+            for(int i=0;i<6;i++) {
                 int idx = app->target_scroll + i;
                 if(idx >= app->network_count) break;
-                char line[54];
-                snprintf(line, sizeof(line), "%c%s", idx==app->selected_target?'>' :' ', app->networks[idx]);
+                char line[64];
+                char arrow = (idx == app->selected_target) ? '>' : ' ';
+                char star = app->target_selected[idx] ? '*' : ' ';
+                snprintf(line, sizeof(line), "%c%c%s", arrow, star, app->networks[idx]);
                 canvas_draw_str(canvas, 2, 12 + i*12, line);
             }
         }
@@ -112,12 +127,17 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             if(app->menu_index > 0) app->menu_index--;
             view_port_update(app->viewport);
         } else if(event->key == InputKeyDown) {
-            if(app->menu_index < 2) app->menu_index++;
+            if(app->menu_index < 3) app->menu_index++;
             view_port_update(app->viewport);
         } else if(event->key == InputKeyOk) {
             if(app->menu_index == 0) app->screen = ScreenScan;
-            else if(app->menu_index == 1) app->screen = ScreenAttack;
-            else app->screen = ScreenTargets;
+            else if(app->menu_index == 1) app->screen = ScreenTargets;
+            else if(app->menu_index == 2) app->screen = ScreenAttack;
+            else {
+                const char* cmd = "raboot\n";
+                furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
+                furi_hal_serial_tx_wait_complete(app->serial);
+            }
             view_port_update(app->viewport);
         } else if(event->key == InputKeyBack) {
             app->exit_app = true;
@@ -126,7 +146,8 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
         if(event->key == InputKeyOk && !app->scanning) {
             app->network_count = 0;
             app->target_scroll = 0;
-            app->selected_target = -1;
+            app->selected_target = 0;
+            memset(app->target_selected, 0, sizeof(app->target_selected));
             app->line_pos = 0;
             const char* cmd = "scan\n";
             furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
@@ -147,12 +168,23 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             view_port_update(app->viewport);
         }
     } else if(app->screen == ScreenAttack) {
-        if(event->key == InputKeyOk && !app->attacking && app->selected_target >= 0) {
-            char cmd[32];
-            snprintf(cmd, sizeof(cmd), "attack %d\n", app->selected_target);
-            furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
-            furi_hal_serial_tx_wait_complete(app->serial);
-            app->attacking = true;
+        if(event->key == InputKeyOk && !app->attacking) {
+            char cmd[128] = "attack";
+            int count = 0;
+            for(int i=0;i<app->network_count;i++) {
+                if(app->target_selected[i]) {
+                    char buf[8];
+                    snprintf(buf, sizeof(buf), " %d", i);
+                    strncat(cmd, buf, sizeof(cmd) - strlen(cmd) - 1);
+                    count++;
+                }
+            }
+            strncat(cmd, "\n", sizeof(cmd) - strlen(cmd) - 1);
+            if(count > 0) {
+                furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
+                furi_hal_serial_tx_wait_complete(app->serial);
+                app->attacking = true;
+            }
             view_port_update(app->viewport);
         } else if(event->key == InputKeyBack) {
             if(app->attacking) {
@@ -172,15 +204,16 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
                 view_port_update(app->viewport);
             }
         } else {
-            if(event->key == InputKeyUp && app->target_scroll > 0) {
-                app->target_scroll--;
+            if(event->key == InputKeyUp && app->selected_target > 0) {
+                app->selected_target--;
+                if(app->selected_target < app->target_scroll) app->target_scroll--; 
                 view_port_update(app->viewport);
-            } else if(event->key == InputKeyDown && app->target_scroll < app->network_count - 1) {
-                app->target_scroll++;
+            } else if(event->key == InputKeyDown && app->selected_target < app->network_count - 1) {
+                app->selected_target++;
+                if(app->selected_target >= app->target_scroll + 6) app->target_scroll++;
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyOk) {
-                app->selected_target = app->target_scroll;
-                app->screen = ScreenMainMenu;
+                app->target_selected[app->selected_target] = !app->target_selected[app->selected_target];
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyBack) {
                 app->screen = ScreenMainMenu;
@@ -199,7 +232,7 @@ int32_t scan_app(void* p) {
         .attacking=false,
         .menu_index=0,
         .target_scroll=0,
-        .selected_target=-1,
+        .selected_target=0,
         .network_count=0,
         .line_pos=0,
         .screen=ScreenMainMenu,
