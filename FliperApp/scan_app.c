@@ -9,6 +9,7 @@ typedef struct {
     bool scanning;
     bool stop_requested;
     bool exit_app;
+    FuriHalSerialHandle* serial;
     ViewPort* viewport;
 } ScanApp;
 
@@ -31,13 +32,13 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
     if(event->type != InputTypeShort) return;
     if(event->key == InputKeyOk && !app->scanning) {
         const char* cmd = "scan\n";
-        furi_hal_serial_tx((const uint8_t*)cmd, strlen(cmd));
+        furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
         app->scanning = true;
         view_port_update(app->viewport);
     } else if(event->key == InputKeyBack) {
         if(app->scanning && !app->stop_requested) {
             const char* cmd = "scanstop\n";
-            furi_hal_serial_tx((const uint8_t*)cmd, strlen(cmd));
+            furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
             app->stop_requested = true;
             view_port_update(app->viewport);
         } else {
@@ -48,7 +49,12 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
 
 int32_t scan_app(void* p) {
     (void)p;
-    ScanApp app = {.scanning=false, .stop_requested=false, .exit_app=false};
+    ScanApp app = {.scanning=false, .stop_requested=false, .exit_app=false, .serial=NULL};
+
+    app.serial = furi_hal_serial_control_acquire(FuriHalSerialIdUsart);
+    if(app.serial) {
+        furi_hal_serial_init(app.serial, 115200);
+    }
 
     Gui* gui = furi_record_open(RECORD_GUI);
     app.viewport = view_port_alloc();
@@ -63,5 +69,11 @@ int32_t scan_app(void* p) {
     gui_remove_view_port(gui, app.viewport);
     view_port_free(app.viewport);
     furi_record_close(RECORD_GUI);
+
+    if(app.serial) {
+        furi_hal_serial_deinit(app.serial);
+        furi_hal_serial_control_release(app.serial);
+    }
+
     return 0;
 }

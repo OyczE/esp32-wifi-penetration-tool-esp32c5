@@ -24,5 +24,6 @@ The application communicates over UART using the default Flipper settings.
 
 For details on the manifest format see [App Manifests](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/AppManifests.md). API documentation can be found in the [Flipper Doxygen pages](https://developer.flipper.net/flipperzero/doxygen/).
 
-The `furi_hal_serial.h` header in this folder is a minimal stub so the app can be
-built outside the firmware tree.
+The `furi_hal_serial.h` header in this folder is a minimal stub providing only
+the few functions used by this example so it can be built outside the firmware
+tree.
