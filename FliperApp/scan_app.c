@@ -25,7 +25,7 @@ typedef enum {
     ScreenTargets,
 } AppScreen;
 
-#define NETWORK_STR_LEN 96
+#define NETWORK_STR_LEN 160
 #define DISPLAY_CHARS   21
 
 typedef struct {
@@ -268,7 +268,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
                 }
             } else if(event->key == InputKeyRight) {
                 size_t len = strlen(app->networks[app->selected_target]);
-                if(app->target_offset + DISPLAY_CHARS < len) {
+                if((size_t)app->target_offset + DISPLAY_CHARS < len) {
                     app->target_offset++;
                     view_port_update(app->viewport);
                 }
