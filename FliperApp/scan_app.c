@@ -93,6 +93,7 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
 }
 
 static void discard_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, void* ctx) {
+    (void)ctx;
     if(event != FuriHalSerialRxEventData) return;
     while(furi_hal_serial_async_rx_available(handle)) {
         furi_hal_serial_async_rx(handle);
