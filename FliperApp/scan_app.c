@@ -92,6 +92,13 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
     }
 }
 
+static void discard_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, void* ctx) {
+    if(event != FuriHalSerialRxEventData) return;
+    while(furi_hal_serial_async_rx_available(handle)) {
+        furi_hal_serial_async_rx(handle);
+    }
+}
+
 static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
     ScanApp* app = ctx;
     canvas_clear(canvas);
@@ -316,12 +323,21 @@ int32_t scan_app(void* p) {
         furi_hal_serial_init(app->serial, 115200);
     }
 
+    /* Flush any garbage from previous session */
+    furi_hal_serial_async_rx_start(app->serial, discard_rx_cb, NULL, false);
+    furi_delay_ms(100);
+    furi_hal_serial_async_rx_stop(app->serial);
+
     const char* reboot_cmd = "reboot\n";
     furi_hal_serial_tx(app->serial, (const uint8_t*)reboot_cmd, strlen(reboot_cmd));
     furi_hal_serial_tx_wait_complete(app->serial);
-    furi_delay_ms(500);
 
-    /* Reinitialize again to discard boot messages */
+    /* Wait for reboot and discard boot log */
+    furi_hal_serial_async_rx_start(app->serial, discard_rx_cb, NULL, false);
+    furi_delay_ms(1000);
+    furi_hal_serial_async_rx_stop(app->serial);
+
+    /* Reinitialize once more so buffers are empty */
     furi_hal_serial_deinit(app->serial);
     furi_hal_serial_init(app->serial, 115200);
 
