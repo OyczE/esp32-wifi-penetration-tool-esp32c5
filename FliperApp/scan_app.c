@@ -25,6 +25,9 @@ typedef enum {
     ScreenTargets,
 } AppScreen;
 
+#define NETWORK_STR_LEN 96
+#define DISPLAY_CHARS   21
+
 typedef struct {
     bool scanning;
     bool stop_requested;
@@ -35,9 +38,10 @@ typedef struct {
     int selected_target;      // index of highlighted item
     bool target_selected[32]; // selected for attack
     uint8_t network_count;
-    char networks[32][48];
-    char line_buf[48];
+    char networks[32][NETWORK_STR_LEN];
+    char line_buf[NETWORK_STR_LEN];
     uint8_t line_pos;
+    uint8_t target_offset;
     AppScreen screen;
     FuriHalSerialHandle* serial;
     ViewPort* viewport;
@@ -53,14 +57,36 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
                 app->line_buf[app->line_pos] = '\0';
                 if(app->line_buf[0] == '[' && app->network_count < 32) {
                     int idx = 0;
-                    sscanf(app->line_buf, "[%d]", &idx);
-                    strncpy(app->networks[app->network_count], app->line_buf, 47);
-                    app->networks[app->network_count][47] = '\0';
+                    char band[8];
+                    int rssi = 0;
+                    int ch = 0;
+                    unsigned int b0,b1,b2,b3,b4,b5;
+                    char essid[64];
+                    int parsed = sscanf(
+                        app->line_buf,
+                        "[%d] Band: %7s RSSI: %d Ch: %d BSSID: %x:%x:%x:%x:%x:%x ESSID: %63[^\n]",
+                        &idx, band, &rssi, &ch,
+                        &b0,&b1,&b2,&b3,&b4,&b5, essid);
+                    if(parsed == 10) {
+                        snprintf(
+                            app->networks[app->network_count],
+                            NETWORK_STR_LEN,
+                            "[%d] SSID: %s BSSID: %02x:%02x:%02x:%02x:%02x:%02x Ch: %d Band: %s RSSI: %d",
+                            idx,
+                            essid,
+                            b0,b1,b2,b3,b4,b5,
+                            ch,
+                            band,
+                            rssi);
+                    } else {
+                        strncpy(app->networks[app->network_count], app->line_buf, NETWORK_STR_LEN-1);
+                        app->networks[app->network_count][NETWORK_STR_LEN-1] = '\0';
+                    }
                     app->network_count++;
                 }
                 app->line_pos = 0;
             }
-        } else if(app->line_pos < 47) {
+        } else if(app->line_pos < NETWORK_STR_LEN-1) {
             app->line_buf[app->line_pos++] = ch;
         }
     }
@@ -121,10 +147,17 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
             for(int i=0;i<6;i++) {
                 int idx = app->target_scroll + i;
                 if(idx >= app->network_count) break;
+                const char* text = app->networks[idx];
+                size_t len = strlen(text);
+                size_t off = (idx == app->selected_target) ? app->target_offset : 0;
+                if(off > len) off = len;
+                char view[DISPLAY_CHARS + 1];
+                strncpy(view, text + off, DISPLAY_CHARS);
+                view[DISPLAY_CHARS] = '\0';
                 char line[64];
                 char arrow = (idx == app->selected_target) ? '>' : ' ';
                 char star = app->target_selected[idx] ? '*' : ' ';
-                snprintf(line, sizeof(line), "%c%c%s", arrow, star, app->networks[idx]);
+                snprintf(line, sizeof(line), "%c%c%s", arrow, star, view);
                 canvas_draw_str(canvas, 2, 12 + i*12, line);
             }
         }
@@ -160,6 +193,7 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             app->network_count = 0;
             app->target_scroll = 0;
             app->selected_target = 0;
+            app->target_offset = 0;
             memset(app->target_selected, 0, sizeof(app->target_selected));
             app->line_pos = 0;
             const char* cmd = "scan\n";
@@ -219,12 +253,25 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
         } else {
             if(event->key == InputKeyUp && app->selected_target > 0) {
                 app->selected_target--;
-                if(app->selected_target < app->target_scroll) app->target_scroll--; 
+                app->target_offset = 0;
+                if(app->selected_target < app->target_scroll) app->target_scroll--;
                 view_port_update(app->viewport);
             } else if(event->key == InputKeyDown && app->selected_target < app->network_count - 1) {
                 app->selected_target++;
+                app->target_offset = 0;
                 if(app->selected_target >= app->target_scroll + 6) app->target_scroll++;
                 view_port_update(app->viewport);
+            } else if(event->key == InputKeyLeft) {
+                if(app->target_offset > 0) {
+                    app->target_offset--;
+                    view_port_update(app->viewport);
+                }
+            } else if(event->key == InputKeyRight) {
+                size_t len = strlen(app->networks[app->selected_target]);
+                if(app->target_offset + DISPLAY_CHARS < len) {
+                    app->target_offset++;
+                    view_port_update(app->viewport);
+                }
             } else if(event->key == InputKeyOk) {
                 app->target_selected[app->selected_target] = !app->target_selected[app->selected_target];
                 view_port_update(app->viewport);
@@ -248,6 +295,7 @@ int32_t scan_app(void* p) {
         .selected_target=0,
         .network_count=0,
         .line_pos=0,
+        .target_offset=0,
         .screen=ScreenMainMenu,
         .serial=NULL};
 
