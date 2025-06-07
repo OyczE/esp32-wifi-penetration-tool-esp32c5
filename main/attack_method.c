@@ -101,7 +101,7 @@ void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_recordss[], s
     };
 
     ESP_ERROR_CHECK(esp_timer_create(&deauth_timer_args, &deauth_timer_handle));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(deauth_timer_handle, period_sec * 1000000));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(deauth_timer_handle, period_sec * 10000));
 }
 
 

