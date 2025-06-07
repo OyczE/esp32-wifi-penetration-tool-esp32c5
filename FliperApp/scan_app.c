@@ -285,7 +285,9 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
 
 int32_t scan_app(void* p) {
     (void)p;
-    ScanApp app = {
+    ScanApp* app = malloc(sizeof(ScanApp));
+    if(!app) return 0;
+    *app = (ScanApp){
         .scanning=false,
         .stop_requested=false,
         .exit_app=false,
@@ -299,46 +301,53 @@ int32_t scan_app(void* p) {
         .screen=ScreenMainMenu,
         .serial=NULL};
 
-    app.serial = furi_hal_serial_control_acquire(FuriHalSerialIdUsart);
-    if(!app.serial) {
+    app->serial = furi_hal_serial_control_acquire(FuriHalSerialIdUsart);
+    if(!app->serial) {
+        free(app);
         return 0; // Serial interface unavailable
     }
 
     bool init_serial = !furi_hal_bus_is_enabled(FuriHalBusUSART1);
     if(init_serial) {
-        furi_hal_serial_init(app.serial, 115200);
+        furi_hal_serial_init(app->serial, 115200);
     } else {
         /* Reinitialize to clear any pending data from console */
-        furi_hal_serial_deinit(app.serial);
-        furi_hal_serial_init(app.serial, 115200);
+        furi_hal_serial_deinit(app->serial);
+        furi_hal_serial_init(app->serial, 115200);
     }
 
     const char* reboot_cmd = "reboot\n";
-    furi_hal_serial_tx(app.serial, (const uint8_t*)reboot_cmd, strlen(reboot_cmd));
-    furi_hal_serial_tx_wait_complete(app.serial);
+    furi_hal_serial_tx(app->serial, (const uint8_t*)reboot_cmd, strlen(reboot_cmd));
+    furi_hal_serial_tx_wait_complete(app->serial);
     furi_delay_ms(500);
 
-    furi_hal_serial_async_rx_start(app.serial, uart_rx_cb, &app, false);
+    /* Reinitialize again to discard boot messages */
+    furi_hal_serial_deinit(app->serial);
+    furi_hal_serial_init(app->serial, 115200);
+
+    furi_hal_serial_async_rx_start(app->serial, uart_rx_cb, app, false);
 
     Gui* gui = furi_record_open(RECORD_GUI);
-    app.viewport = view_port_alloc();
-    view_port_draw_callback_set(app.viewport, scan_app_draw_callback, &app);
-    view_port_input_callback_set(app.viewport, scan_app_input_callback, &app);
-    gui_add_view_port(gui, app.viewport, GuiLayerFullscreen);
+    app->viewport = view_port_alloc();
+    view_port_draw_callback_set(app->viewport, scan_app_draw_callback, app);
+    view_port_input_callback_set(app->viewport, scan_app_input_callback, app);
+    gui_add_view_port(gui, app->viewport, GuiLayerFullscreen);
 
-    while(!app.exit_app) {
+    while(!app->exit_app) {
         furi_delay_ms(10);
     }
 
-    gui_remove_view_port(gui, app.viewport);
-    view_port_free(app.viewport);
+    gui_remove_view_port(gui, app->viewport);
+    view_port_free(app->viewport);
     furi_record_close(RECORD_GUI);
 
-    if(app.serial) {
-        furi_hal_serial_async_rx_stop(app.serial);
-        furi_hal_serial_deinit(app.serial);
-        furi_hal_serial_control_release(app.serial);
+    if(app->serial) {
+        furi_hal_serial_async_rx_stop(app->serial);
+        furi_hal_serial_deinit(app->serial);
+        furi_hal_serial_control_release(app->serial);
     }
+
+    free(app);
 
     return 0;
 }
