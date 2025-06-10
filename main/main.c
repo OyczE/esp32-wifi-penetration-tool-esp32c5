@@ -268,11 +268,17 @@ void gui_task(void *arg) {
     lv_style_init(&st);
     lv_style_set_text_font(&st, &lv_font_montserrat_14);
 
+    lv_obj_t * screen = lv_scr_act();
+    lv_obj_set_style_bg_color(screen, lv_color_black(), 0);
+    lv_style_set_bg_color(&st, lv_color_black());
+    lv_style_set_text_color(&st, lv_color_white()); 
+
+
     lv_obj_t *labels[15];
 
     for (size_t i = 0; i < 15; i++) {
         labels[i] = lv_label_create(lv_scr_act()); 
-        lv_label_set_text(labels[i], "-----"); 
+        lv_label_set_text(labels[i], ""); 
         lv_obj_set_pos(labels[i], 35, 15 * i);
         lv_obj_add_style(labels[i], &st, 0);
     }
