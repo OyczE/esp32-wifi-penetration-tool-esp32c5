@@ -8,7 +8,7 @@
 
 #define TARGET_VISIBLE_LINES 5
 // Display width in characters including cursor and selection marker
-#define TARGET_DISPLAY_CHARS 21
+#define TARGET_DISPLAY_CHARS 24
 #define SCROLL_STEP_DELAY 5
 
 // strncat is disabled in Flipper firmware API, so implement a minimal
@@ -60,9 +60,14 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
             if(app->line_pos > 0) {
                 app->line_buf[app->line_pos] = '\0';
                 if(app->line_buf[0] == '[' && app->network_count < 32) {
-                    int idx = 0;
-                    sscanf(app->line_buf, "[%d]", &idx);
-                    strncpy(app->networks[app->network_count], app->line_buf, 47);
+                    char* essid = strstr(app->line_buf, "ESSID:");
+                    if(essid) {
+                        essid += 6; // skip "ESSID:"
+                        while(*essid == ' ') essid++;
+                    } else {
+                        essid = app->line_buf;
+                    }
+                    strncpy(app->networks[app->network_count], essid, 47);
                     app->networks[app->network_count][47] = '\0';
                     app->network_count++;
                 }
