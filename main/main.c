@@ -279,7 +279,7 @@ void gui_task(void *arg) {
     for (size_t i = 0; i < 15; i++) {
         labels[i] = lv_label_create(lv_scr_act()); 
         lv_label_set_text(labels[i], ""); 
-        lv_obj_set_pos(labels[i], 35, 15 * i);
+        lv_obj_set_pos(labels[i],0, 15 * i);
         lv_obj_add_style(labels[i], &st, 0);
     }
 
@@ -288,7 +288,7 @@ void gui_task(void *arg) {
 
         if (pdTRUE == xSemaphoreTake(xGuiSemaphore, 50 / portTICK_PERIOD_MS)) {
             if (globalDataCount == 0) {
-                lv_label_set_text(labels[0], "AP: ManagementAP");
+                lv_label_set_text(labels[0], "AP: Livebox");
                 lv_label_set_text(labels[1], "Pass: mgmtadmin");
                 lv_label_set_text(labels[2], "IP: 192.168.4.1");
             } else {
