@@ -37,6 +37,23 @@ The application communicates over UART using the default Flipper settings. It cl
    The resulting `.fap` file will appear in `dist/apps/`.
 4. Copy the `.fap` to your Flipper's `apps/` directory using qFlipper or USB mass storage.
 
+### Quick build in Visual Studio Code
+
+1. Open the system terminal in VSC.
+2. Install the build tool:
+
+   ```bash
+   pip install ufbt
+   ```
+
+3. Go to the `FliperApp` directory and run:
+
+   ```bash
+   ufbt
+   ```
+
+   The compiled app will be in `.ufbt\build\scan_app.fap`.
+
 For details on the manifest format see [App Manifests](https://github.com/flipperdevices/flipperzero-firmware/blob/dev/documentation/AppManifests.md). API documentation can be found in the [Flipper Doxygen pages](https://developer.flipper.net/flipperzero/doxygen/).
 
 The `furi_hal_serial.h` header in this folder is a minimal stub providing only
