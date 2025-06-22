@@ -87,10 +87,13 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
                     char entry[48];
                     snprintf(entry, sizeof(entry), "%s ", band);
                     safe_strlcat(entry, essid, sizeof(entry));
+                    safe_strlcat(entry, " ", sizeof(entry));
+                    safe_strlcat(entry, auth, sizeof(entry));
                     strncpy(app->networks[app->network_count], entry, 47);
                     app->networks[app->network_count][47] = '\0';
 
-                    if(strncmp(auth, "WPA3", 4) == 0) app->count_wpa3++;
+                    if(strncmp(auth, "WPA2/WPA3", 9) == 0) app->count_wpa3++;
+                    else if(strncmp(auth, "WPA3", 4) == 0) app->count_wpa3++;
                     else if(strncmp(auth, "WPA2", 4) == 0) app->count_wpa2++;
                     else if(strncmp(auth, "WPA", 3) == 0) app->count_wpa++;
                     else app->count_open++;
