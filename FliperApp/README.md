@@ -64,3 +64,4 @@ For step-by-step debugging you can invoke:
 ```
 
 More details can be found in [DEBUGGING.md](DEBUGGING.md).
+For common connection problems see the "Troubleshooting" section in [DEBUGGING.md](DEBUGGING.md).
