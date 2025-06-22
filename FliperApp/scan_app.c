@@ -85,7 +85,8 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
                     }
 
                     char entry[48];
-                    snprintf(entry, sizeof(entry), "%s %s", band, essid);
+                    snprintf(entry, sizeof(entry), "%s ", band);
+                    safe_strlcat(entry, essid, sizeof(entry));
                     strncpy(app->networks[app->network_count], entry, 47);
                     app->networks[app->network_count][47] = '\0';
 
