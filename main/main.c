@@ -30,6 +30,7 @@
 #include "attack_pmkid.h"
 #include "wifi_controller.h"
 #include "webserver.h"
+#include "led_status.h"
 
 #include <stdbool.h>
 #include <unistd.h>
@@ -103,6 +104,7 @@ static void print_ap_list_flipper_band(void){
 }
 
 static void scan_loop_task(void *pv){
+    led_status_set_state(LED_STATE_SCAN);
     while(scan_running){
         wifictl_scan_nearby_aps();
         if(!scan_running){
@@ -111,6 +113,7 @@ static void scan_loop_task(void *pv){
         print_ap_list_flipper_band();
         vTaskDelay(pdMS_TO_TICKS(1700));
     }
+    led_status_set_state(LED_STATE_IDLE);
     scan_task_handle = NULL;
     vTaskDelete(NULL);
 }
@@ -143,6 +146,7 @@ static void cli_start_attack(int *ids, int count){
     free(req);
     if(err == ESP_OK){
         printf("Attack started on %d AP(s).\n", count);
+        led_status_set_state(LED_STATE_ATTACK);
     }else{
         printf("Failed to start attack: %s\n", esp_err_to_name(err));
     }
@@ -171,6 +175,7 @@ static void cli_stop_attack(void){
     attack_update_status(FINISHED);
     esp_event_post(WEBSERVER_EVENTS, WEBSERVER_EVENT_ATTACK_RESET, NULL, 0, portMAX_DELAY);
     wifictl_mgmt_ap_start();
+    led_status_set_state(LED_STATE_IDLE);
     printf("Attack stopped.\n");
 }
 
@@ -208,12 +213,14 @@ static void cli_task(void *pv){
                         if(!scan_running){
                             scan_running = true;
                             xTaskCreate(scan_loop_task, "scan_loop", 4096, NULL, 5, &scan_task_handle);
+                            led_status_set_state(LED_STATE_SCAN);
                             printf("Continuous scan started.\n");
                         } else {
                             printf("Scan already running.\n");
                         }
                     } else if(strcmp(command, "scanstop") == 0){
                         scan_running = false;
+                        led_status_set_state(LED_STATE_IDLE);
                         printf("Scan stopped.\n");
                     } else if(strcmp(command, "attackstop") == 0){
                         cli_stop_attack();
@@ -339,6 +346,7 @@ void webserver_task(void *arg) {
 
 void app_main(void) {
     ESP_LOGD(TAG, "app_main started");
+    led_status_init();
 
     esp_err_t ret1 = esp_psram_init();
     if (ret1 == ESP_OK) {
@@ -379,6 +387,8 @@ void app_main(void) {
     xTaskCreate(gui_task,       "gui",       STACK_SIZE, NULL, 3, &gui_task_Handle);
     xTaskCreate(webserver_task, "webserver", STACK_SIZE, NULL, 5, &server_task_Handle);
     xTaskCreate(cli_task, "cli_task", 4096, NULL, 5, NULL);
+
+    led_status_set_state(LED_STATE_IDLE);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
