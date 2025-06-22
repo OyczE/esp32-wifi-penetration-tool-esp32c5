@@ -313,14 +313,12 @@ int32_t scan_app(void* p) {
         furi_hal_serial_init(app.serial, 115200);
     }
 
-    const char* reboot_cmd = "reboot\n";
-    furi_hal_serial_tx(app.serial, (const uint8_t*)reboot_cmd, strlen(reboot_cmd));
+    /* Clear any pending console output by sending a newline. */
+    const char* init_cmd = "\n";
+    furi_hal_serial_tx(app.serial, (const uint8_t*)init_cmd, strlen(init_cmd));
     furi_hal_serial_tx_wait_complete(app.serial);
-    /* allow ESP32 to reboot fully */
-    // ESP32-C5 boot time increased on recent firmware versions.
-    // Wait longer to ensure the module finishes rebooting before
-    // enabling UART reception to avoid Furi check failures.
-    furi_delay_ms(4000);
+    /* Short delay to ensure the command is processed */
+    furi_delay_ms(100);
 
     /* Start UART reception and discard any remaining boot output */
     furi_hal_serial_async_rx_start(app.serial, uart_rx_cb, &app, false);
