@@ -316,12 +316,16 @@ int32_t scan_app(void* p) {
     const char* reboot_cmd = "reboot\n";
     furi_hal_serial_tx(app.serial, (const uint8_t*)reboot_cmd, strlen(reboot_cmd));
     furi_hal_serial_tx_wait_complete(app.serial);
-    furi_delay_ms(500);
+    /* allow ESP32 to reboot fully */
+    furi_delay_ms(1000);
 
-    /* Start UART reception and discard any boot output */
+    /* Start UART reception and discard any remaining boot output */
     furi_hal_serial_async_rx_start(app.serial, uart_rx_cb, &app, false);
-    while(furi_hal_serial_async_rx_available(app.serial)) {
-        furi_hal_serial_async_rx(app.serial);
+    for(int i = 0; i < 100; i++) {
+        while(furi_hal_serial_async_rx_available(app.serial)) {
+            furi_hal_serial_async_rx(app.serial);
+        }
+        furi_delay_ms(10);
     }
 
     Gui* gui = furi_record_open(RECORD_GUI);
