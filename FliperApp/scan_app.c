@@ -9,7 +9,7 @@
 #define TARGET_VISIBLE_LINES 5
 // Display width in characters including cursor and selection marker
 #define TARGET_DISPLAY_CHARS 24
-#define SCROLL_STEP_DELAY 5
+#define SCROLL_STEP_DELAY 3
 
 // strncat is disabled in Flipper firmware API, so implement a minimal
 // replacement similar to BSD strlcat for safe string concatenation.
@@ -46,8 +46,6 @@ typedef struct {
     char networks[32][48];
     char line_buf[48];
     uint8_t line_pos;
-    bool rx_data_received;   // flag indicating UART activity
-    bool esp_ready;          // communication check result
     AppScreen screen;
     FuriHalSerialHandle* serial;
     ViewPort* viewport;
@@ -58,23 +56,18 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
     if(event != FuriHalSerialRxEventData) return;
     while(furi_hal_serial_async_rx_available(handle)) {
         char ch = (char)furi_hal_serial_async_rx(handle);
-        app->rx_data_received = true;
         if(ch == '\n' || ch == '\r') {
             if(app->line_pos > 0) {
                 app->line_buf[app->line_pos] = '\0';
                 if(app->line_buf[0] == '[' && app->network_count < 32) {
-                    char* ssid = strstr(app->line_buf, "SSID:");
-                    if(!ssid) ssid = strstr(app->line_buf, "ESSID:");
-                    if(ssid) {
-                        ssid = strchr(ssid, ':');
-                        if(ssid) {
-                            ssid++; // skip ':'
-                            while(*ssid == ' ') ssid++;
-                        }
+                    char* essid = strstr(app->line_buf, "ESSID:");
+                    if(essid) {
+                        essid += 6; // skip "ESSID:"
+                        while(*essid == ' ') essid++;
                     } else {
-                        ssid = app->line_buf;
+                        essid = app->line_buf;
                     }
-                    strncpy(app->networks[app->network_count], ssid, 47);
+                    strncpy(app->networks[app->network_count], essid, 47);
                     app->networks[app->network_count][47] = '\0';
                     app->network_count++;
                 }
@@ -95,9 +88,6 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
         canvas_draw_str(canvas, 2, 24, app->menu_index == 1 ? "> Targets" : "  Targets");
         canvas_draw_str(canvas, 2, 36, app->menu_index == 2 ? "> Attack" : "  Attack");
         canvas_draw_str(canvas, 2, 48, app->menu_index == 3 ? "> Reboot" : "  Reboot");
-        if(!app->esp_ready) {
-            canvas_draw_str(canvas, 2, 60, "No response from ESP32");
-        }
     } else if(app->screen == ScreenScan) {
         char buf[32];
         if(!app->scanning) {
@@ -301,9 +291,20 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
 
 int32_t scan_app(void* p) {
     (void)p;
-    static ScanApp app; // allocate in BSS to reduce stack usage
-    memset(&app, 0, sizeof(app));
-    app.screen = ScreenMainMenu;
+    ScanApp app = {
+        .scanning=false,
+        .stop_requested=false,
+        .exit_app=false,
+        .attacking=false,
+        .menu_index=0,
+        .target_scroll=0,
+        .selected_target=0,
+        .target_name_offset=0,
+        .target_scroll_tick=0,
+        .network_count=0,
+        .line_pos=0,
+        .screen=ScreenMainMenu,
+        .serial=NULL};
 
     app.serial = furi_hal_serial_control_acquire(FuriHalSerialIdUsart);
     if(!app.serial) {
@@ -319,31 +320,12 @@ int32_t scan_app(void* p) {
         furi_hal_serial_init(app.serial, 115200);
     }
 
-    /* Clear any pending console output by sending a newline. */
-    const char* init_cmd = "\n";
-    furi_hal_serial_tx(app.serial, (const uint8_t*)init_cmd, strlen(init_cmd));
+    const char* reboot_cmd = "reboot\n";
+    furi_hal_serial_tx(app.serial, (const uint8_t*)reboot_cmd, strlen(reboot_cmd));
     furi_hal_serial_tx_wait_complete(app.serial);
-    /* Short delay to ensure the command is processed */
-    furi_delay_ms(100);
+    furi_delay_ms(500);
 
-    /* Start UART reception and discard any remaining boot output */
     furi_hal_serial_async_rx_start(app.serial, uart_rx_cb, &app, false);
-    for(int i = 0; i < 400; i++) {
-        while(furi_hal_serial_async_rx_available(app.serial)) {
-            furi_hal_serial_async_rx(app.serial);
-        }
-        furi_delay_ms(10);
-    }
-
-    // Send a help command to verify communication with ESP32
-    app.rx_data_received = false;
-    const char* verify_cmd = "help\n";
-    furi_hal_serial_tx(app.serial, (const uint8_t*)verify_cmd, strlen(verify_cmd));
-    furi_hal_serial_tx_wait_complete(app.serial);
-    for(int i = 0; i < 100 && !app.rx_data_received; i++) {
-        furi_delay_ms(10);
-    }
-    app.esp_ready = app.rx_data_received;
 
     Gui* gui = furi_record_open(RECORD_GUI);
     app.viewport = view_port_alloc();
