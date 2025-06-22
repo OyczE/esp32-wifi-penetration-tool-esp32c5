@@ -79,12 +79,14 @@ static void print_ap_list_flipper_band(void){
                 break;
 #ifdef WIFI_AUTH_WPA3_PSK
             case WIFI_AUTH_WPA3_PSK:
+                enc = "WPA3";
+                break;
 #endif
 #ifdef WIFI_AUTH_WPA2_WPA3_PSK
             case WIFI_AUTH_WPA2_WPA3_PSK:
-#endif
-                enc = "WPA3";
+                enc = "WPA2/WPA3";
                 break;
+#endif
             default:
                 break;
         }

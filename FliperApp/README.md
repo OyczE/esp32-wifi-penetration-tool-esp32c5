@@ -20,7 +20,7 @@ Shows list of selected targets.
 
 ### Targets screen
 
-Shows up to five networks at once. Use **UP**/**DOWN** to move the cursor – the list scrolls automatically. Press **LEFT**/**RIGHT** to manually scroll the highlighted name. Press **OK** to toggle selection of a network. Selected entries are marked with `*`. **BACK** returns to the menu.
+Shows up to five networks at once. Each entry displays the band, SSID and encryption (e.g. `2.4G MyAP WPA2`). Use **UP**/**DOWN** to move the cursor – the list scrolls automatically. Press **LEFT**/**RIGHT** to manually scroll the highlighted name. Press **OK** to toggle selection of a network. Selected entries are marked with `*`. **BACK** returns to the menu.
 
 The application communicates over UART using the default Flipper settings. It clears any pending console output on start so no stray characters are sent.
 
