@@ -43,8 +43,12 @@ typedef struct {
     uint8_t target_scroll_tick; // delay counter for scrolling
     bool target_selected[32]; // selected for attack
     uint8_t network_count;
+    uint8_t count_open;
+    uint8_t count_wpa;
+    uint8_t count_wpa2;
+    uint8_t count_wpa3;
     char networks[32][48];
-    char line_buf[48];
+    char line_buf[96];
     uint8_t line_pos;
     AppScreen screen;
     FuriHalSerialHandle* serial;
@@ -60,20 +64,41 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
             if(app->line_pos > 0) {
                 app->line_buf[app->line_pos] = '\0';
                 if(app->line_buf[0] == '[' && app->network_count < 32) {
-                    char* essid = strstr(app->line_buf, "ESSID:");
+                    char* essid = strstr(app->line_buf, "SSID:");
                     if(essid) {
-                        essid += 6; // skip "ESSID:"
+                        essid += 5; // skip "SSID:"
                         while(*essid == ' ') essid++;
                     } else {
                         essid = app->line_buf;
                     }
-                    strncpy(app->networks[app->network_count], essid, 47);
+
+                    char* last = strrchr(app->line_buf, ' ');
+                    char auth[8] = "";
+                    char band[8] = "";
+                    if(last) {
+                        strncpy(auth, last + 1, sizeof(auth) - 1);
+                        *last = '\0';
+                        char* last2 = strrchr(app->line_buf, ' ');
+                        if(last2) {
+                            strncpy(band, last2 + 1, sizeof(band) - 1);
+                        }
+                    }
+
+                    char entry[48];
+                    snprintf(entry, sizeof(entry), "%s %s", band, essid);
+                    strncpy(app->networks[app->network_count], entry, 47);
                     app->networks[app->network_count][47] = '\0';
+
+                    if(strncmp(auth, "WPA3", 4) == 0) app->count_wpa3++;
+                    else if(strncmp(auth, "WPA2", 4) == 0) app->count_wpa2++;
+                    else if(strncmp(auth, "WPA", 3) == 0) app->count_wpa++;
+                    else app->count_open++;
+
                     app->network_count++;
                 }
                 app->line_pos = 0;
             }
-        } else if(app->line_pos < 47) {
+        } else if(app->line_pos < 95) {
             app->line_buf[app->line_pos++] = ch;
         }
     }
@@ -94,9 +119,12 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
             canvas_draw_str(canvas, 2, 12, "Press OK to Start");
             canvas_draw_str(canvas, 2, 24, "Back");
         } else if(!app->stop_requested) {
-            snprintf(buf, sizeof(buf), "Scanning %d", app->network_count);
-            canvas_draw_str(canvas, 2, 12, buf);
-            canvas_draw_str(canvas, 2, 24, "Back: stop");
+            canvas_draw_str(canvas, 2, 12, "Scanning ...");
+            snprintf(buf, sizeof(buf), "Open:%d   WPA:%d", app->count_open, app->count_wpa);
+            canvas_draw_str(canvas, 2, 24, buf);
+            snprintf(buf, sizeof(buf), "WPA2:%d  WPA3:%d", app->count_wpa2, app->count_wpa3);
+            canvas_draw_str(canvas, 2, 36, buf);
+            canvas_draw_str(canvas, 2, 48, "Back: stop");
         } else {
             canvas_draw_str(canvas, 2, 12, "Scan Stopped");
             canvas_draw_str(canvas, 2, 24, "Back");
@@ -192,6 +220,10 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
             app->selected_target = 0;
             memset(app->target_selected, 0, sizeof(app->target_selected));
             app->line_pos = 0;
+            app->count_open = 0;
+            app->count_wpa = 0;
+            app->count_wpa2 = 0;
+            app->count_wpa3 = 0;
             const char* cmd = "scan\n";
             furi_hal_serial_tx(app->serial, (const uint8_t*)cmd, strlen(cmd));
             furi_hal_serial_tx_wait_complete(app->serial);
@@ -302,6 +334,10 @@ int32_t scan_app(void* p) {
         .target_name_offset=0,
         .target_scroll_tick=0,
         .network_count=0,
+        .count_open=0,
+        .count_wpa=0,
+        .count_wpa2=0,
+        .count_wpa3=0,
         .line_pos=0,
         .screen=ScreenMainMenu,
         .serial=NULL};
