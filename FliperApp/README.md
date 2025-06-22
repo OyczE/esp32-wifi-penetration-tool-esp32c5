@@ -46,3 +46,21 @@ tree.
 For a more advanced example of UART usage see the
 [uart_demo](https://github.com/jamisonderek/flipper-zero-tutorials/tree/main/gpio/uart_demo)
 project referenced in Flipper Zero community tutorials.
+
+## Debugging
+
+If the application crashes or behaves unexpectedly you can gather logs using the
+tools provided with the firmware sources. From the firmware directory run:
+
+```bash
+./fbt flash_usb   # upload the build
+./fbt log         # view runtime logs
+```
+
+For step-by-step debugging you can invoke:
+
+```bash
+./fbt debug
+```
+
+More details can be found in [DEBUGGING.md](DEBUGGING.md).
