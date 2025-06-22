@@ -46,6 +46,8 @@ typedef struct {
     char networks[32][48];
     char line_buf[48];
     uint8_t line_pos;
+    bool rx_data_received;   // flag indicating UART activity
+    bool esp_ready;          // communication check result
     AppScreen screen;
     FuriHalSerialHandle* serial;
     ViewPort* viewport;
@@ -56,6 +58,7 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
     if(event != FuriHalSerialRxEventData) return;
     while(furi_hal_serial_async_rx_available(handle)) {
         char ch = (char)furi_hal_serial_async_rx(handle);
+        app->rx_data_received = true;
         if(ch == '\n' || ch == '\r') {
             if(app->line_pos > 0) {
                 app->line_buf[app->line_pos] = '\0';
@@ -92,6 +95,9 @@ static void scan_app_draw_callback(Canvas* canvas, void* ctx) {
         canvas_draw_str(canvas, 2, 24, app->menu_index == 1 ? "> Targets" : "  Targets");
         canvas_draw_str(canvas, 2, 36, app->menu_index == 2 ? "> Attack" : "  Attack");
         canvas_draw_str(canvas, 2, 48, app->menu_index == 3 ? "> Reboot" : "  Reboot");
+        if(!app->esp_ready) {
+            canvas_draw_str(canvas, 2, 60, "No response from ESP32");
+        }
     } else if(app->screen == ScreenScan) {
         char buf[32];
         if(!app->scanning) {
@@ -328,6 +334,16 @@ int32_t scan_app(void* p) {
         }
         furi_delay_ms(10);
     }
+
+    // Send a help command to verify communication with ESP32
+    app.rx_data_received = false;
+    const char* verify_cmd = "help\n";
+    furi_hal_serial_tx(app.serial, (const uint8_t*)verify_cmd, strlen(verify_cmd));
+    furi_hal_serial_tx_wait_complete(app.serial);
+    for(int i = 0; i < 100 && !app.rx_data_received; i++) {
+        furi_delay_ms(10);
+    }
+    app.esp_ready = app.rx_data_received;
 
     Gui* gui = furi_record_open(RECORD_GUI);
     app.viewport = view_port_alloc();
