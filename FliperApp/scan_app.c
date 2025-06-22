@@ -60,14 +60,18 @@ static void uart_rx_cb(FuriHalSerialHandle* handle, FuriHalSerialRxEvent event, 
             if(app->line_pos > 0) {
                 app->line_buf[app->line_pos] = '\0';
                 if(app->line_buf[0] == '[' && app->network_count < 32) {
-                    char* essid = strstr(app->line_buf, "ESSID:");
-                    if(essid) {
-                        essid += 6; // skip "ESSID:"
-                        while(*essid == ' ') essid++;
+                    char* ssid = strstr(app->line_buf, "SSID:");
+                    if(!ssid) ssid = strstr(app->line_buf, "ESSID:");
+                    if(ssid) {
+                        ssid = strchr(ssid, ':');
+                        if(ssid) {
+                            ssid++; // skip ':'
+                            while(*ssid == ' ') ssid++;
+                        }
                     } else {
-                        essid = app->line_buf;
+                        ssid = app->line_buf;
                     }
-                    strncpy(app->networks[app->network_count], essid, 47);
+                    strncpy(app->networks[app->network_count], ssid, 47);
                     app->networks[app->network_count][47] = '\0';
                     app->network_count++;
                 }
