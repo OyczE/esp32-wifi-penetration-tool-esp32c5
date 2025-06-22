@@ -329,7 +329,11 @@ int32_t scan_app(void* p) {
     furi_hal_serial_tx_wait_complete(app.serial);
     furi_delay_ms(500);
 
+    /* Start UART reception and discard any boot output */
     furi_hal_serial_async_rx_start(app.serial, uart_rx_cb, &app, false);
+    while(furi_hal_serial_async_rx_available(app.serial)) {
+        furi_hal_serial_async_rx(app.serial);
+    }
 
     Gui* gui = furi_record_open(RECORD_GUI);
     app.viewport = view_port_alloc();
