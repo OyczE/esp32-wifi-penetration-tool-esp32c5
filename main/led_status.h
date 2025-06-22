@@ -2,7 +2,7 @@
 #define LED_STATUS_H
 
 #include "freertos/FreeRTOS.h"
-#include "led_strip.h"
+#include "driver/led_strip.h"
 
 typedef enum {
     LED_STATE_BOOT,
