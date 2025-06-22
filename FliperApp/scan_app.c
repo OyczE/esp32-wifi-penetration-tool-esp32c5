@@ -295,20 +295,9 @@ static void scan_app_input_callback(InputEvent* event, void* ctx) {
 
 int32_t scan_app(void* p) {
     (void)p;
-    ScanApp app = {
-        .scanning=false,
-        .stop_requested=false,
-        .exit_app=false,
-        .attacking=false,
-        .menu_index=0,
-        .target_scroll=0,
-        .selected_target=0,
-        .target_name_offset=0,
-        .target_scroll_tick=0,
-        .network_count=0,
-        .line_pos=0,
-        .screen=ScreenMainMenu,
-        .serial=NULL};
+    static ScanApp app; // allocate in BSS to reduce stack usage
+    memset(&app, 0, sizeof(app));
+    app.screen = ScreenMainMenu;
 
     app.serial = furi_hal_serial_control_acquire(FuriHalSerialIdUsart);
     if(!app.serial) {
