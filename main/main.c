@@ -68,14 +68,14 @@ static void print_ap_list_flipper_band(void){
     const wifictl_ap_records_t *records = wifictl_get_ap_records();
     for(int i = 0; i < records->count; i++){
         const wifi_ap_record_t *rec = &records->records[i];
-        printf("[%d] Band: %s RSSI: %d Ch: %d BSSID: %02x:%02x:%02x:%02x:%02x:%02x ESSID: %s\n",
+        printf("[%d] SSID:%s RSSI:%d Ch:%d BSSID:%02x:%02x:%02x:%02x:%02x:%02x %s\n",
                i,
-               get_band_from_channel(rec->primary),
+               rec->ssid[0] ? (char *)rec->ssid : "<hidden>",
                rec->rssi,
                rec->primary,
                rec->bssid[0], rec->bssid[1], rec->bssid[2],
                rec->bssid[3], rec->bssid[4], rec->bssid[5],
-               rec->ssid[0] ? (char *)rec->ssid : "<hidden>");
+               get_band_from_channel(rec->primary));
     }
 }
 
