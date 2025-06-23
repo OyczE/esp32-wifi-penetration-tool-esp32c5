@@ -213,7 +213,7 @@ void spi_display_init(void){
 		assert(TransactionPool != NULL);
 		for (size_t i = 0; i < SPI_TRANSACTION_POOL_SIZE; i++)
 		{
-			spi_transaction_ext_t* pTransaction = (spi_transaction_ext_t*)heap_caps_malloc(sizeof(spi_transaction_ext_t), MALLOC_CAP_DMA);
+			spi_transaction_ext_t* pTransaction = (spi_transaction_ext_t*)heap_caps_malloc(sizeof(spi_transaction_ext_t), MALLOC_CAP_SPIRAM);
 			assert(pTransaction != NULL);
 			memset(pTransaction, 0, sizeof(spi_transaction_ext_t));
 			xQueueSend(TransactionPool, &pTransaction, portMAX_DELAY);

@@ -120,7 +120,7 @@ static httpd_uri_t uri_ap_list_get = {
 static esp_err_t uri_run_attack_post_handler(httpd_req_t *req) {
 
     // Dynamic memory allocation
-    attack_request_t *attack_request_deb = malloc(sizeof(attack_request_t));
+    attack_request_t *attack_request_deb = heap_caps_malloc(sizeof(attack_request_t), MALLOC_CAP_SPIRAM);
     if (attack_request_deb == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for attack_request_deb!");
         return ESP_FAIL;

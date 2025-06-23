@@ -80,13 +80,12 @@ void gui_task(void *arg) {
     for (size_t i = 0; i < 15; i++) {
         labels[i] = lv_label_create(lv_scr_act()); 
         lv_label_set_text(labels[i], ""); 
-        lv_obj_set_pos(labels[i],0, 15 * i);
+        lv_obj_set_pos(labels[i],35, 15 * i);
         lv_obj_add_style(labels[i], &st, 0);
     }
 
     while (1) {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-
+        vTaskDelay(500 / portTICK_PERIOD_MS);
         if (pdTRUE == xSemaphoreTake(xGuiSemaphore, 50 / portTICK_PERIOD_MS)) {
             if (globalDataCount == 0) {
                 lv_label_set_text(labels[0], "AP: Livebox");
@@ -118,21 +117,25 @@ void webserver_task(void *arg) {
 void app_main(void) {
     ESP_LOGD(TAG, "app_main started");
 
-    esp_err_t ret1 = esp_psram_init();
-    if (ret1 == ESP_OK) {
-        size_t psram_size = esp_psram_get_size();
-        ESP_LOGW(TAG, "PSRAM size: %d bytes\n", psram_size);
-    } else {
-        ESP_LOGW(TAG, "PSRAM not detected\n");
-    }
+    // esp_err_t ret1 = esp_psram_init();
+    // if (ret1 == ESP_OK) {
+    //     size_t psram_size = esp_psram_get_size();
+    //     ESP_LOGW(TAG, "PSRAM size: %d bytes\n", psram_size);
+    // } else {
+    //     ESP_LOGW(TAG, "PSRAM not detected\n");
+    // }
 
-    void* ptr = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
-    if (ptr != NULL) {
-        ESP_LOGW(TAG, "Malloc from PSRAM succeeded\n");
-        heap_caps_free(ptr);
-    } else {
-        ESP_LOGW(TAG, "Malloc from PSRAM failed\n");
-    }
+    // void* ptr = heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
+    // if (ptr != NULL) {
+    //     ESP_LOGW(TAG, "Malloc from PSRAM succeeded\n");
+    //     heap_caps_free(ptr);
+    // } else {
+    //     ESP_LOGW(TAG, "Malloc from PSRAM failed\n");
+    // }
+
+
+    //ESP_LOGW("MEM", "Free heap: %d bytes", esp_get_free_heap_size());
+    //ESP_LOGW("MEM", "Free 8-bit heap: %d bytes", heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -143,17 +146,17 @@ void app_main(void) {
     spi_display_init();
     st7789_init();
 
-    xTaskCreate(gui_task,       "gui",       STACK_SIZE, NULL, 3, &gui_task_Handle);
+    xTaskCreate(gui_task,       "gui",       STACK_SIZE, NULL, 1, &gui_task_Handle);
     xTaskCreate(webserver_task, "webserver", STACK_SIZE, NULL, 5, &server_task_Handle);
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    ESP_LOGW(TAG, "esp_get_free_heap_size(): %u bytes\n", esp_get_free_heap_size());
-    size_t free_size = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
-    size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
-    ESP_LOGW(TAG, "heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT): %d bytes\n", largest_block);
-    ESP_LOGW(TAG, "heap_caps_get_free_size(MALLOC_CAP_DEFAULT): %d bytes\n", free_size);
-    ESP_LOGW(TAG, "heap_caps_get_free_size(MALLOC_CAP_8BIT): %u bytes", heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    //ESP_LOGW(TAG, "esp_get_free_heap_size(): %u bytes\n", esp_get_free_heap_size());
+    //size_t free_size = heap_caps_get_free_size(MALLOC_CAP_DEFAULT);
+    //size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+    //ESP_LOGW(TAG, "heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT): %d bytes\n", largest_block);
+    //ESP_LOGW(TAG, "heap_caps_get_free_size(MALLOC_CAP_DEFAULT): %d bytes\n", free_size);
+    //ESP_LOGW(TAG, "heap_caps_get_free_size(MALLOC_CAP_8BIT): %u bytes", heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
 }
 

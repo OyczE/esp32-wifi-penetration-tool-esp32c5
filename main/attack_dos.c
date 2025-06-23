@@ -41,6 +41,12 @@ void attack_dos_start(attack_config_t *attack_config) {
             //TODO fix me attack_method_rogueap(attack_config->ap_record);
             //TODO fix me attack_method_broadcast(attack_config->ap_record, 1);
             break;
+        case WPA3_SAE_CLIENT_OVERFLOW:
+            wifictl_wpa3_sae_client_overflow(attack_config->ap_records[0]);
+            break;
+        case WPA3_SAE_DRAGON_DRAIN: 
+            wifictl_wpa3_sae_dragon_drain(attack_config->ap_records[0]);
+            break;
         default:
             ESP_LOGE(TAG, "Method unknown! DoS attack not started.");
     }
@@ -61,7 +67,7 @@ void attack_dos_stop() {
             wifictl_restore_ap_mac();
             break;
         default:
-            ESP_LOGE(TAG, "Unknown attack method! Attack may not be stopped properly.");
+            ESP_LOGE(TAG, "Unknown attack method! Attack may not be stopped properly. Just reset yur board!");
     }
     ESP_LOGI(TAG, "DoS attack stopped");
 }

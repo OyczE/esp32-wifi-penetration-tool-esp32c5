@@ -26,6 +26,9 @@ void attack_method_broadcast(const wifi_ap_record_t *ap_record, unsigned period_
 
 void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_record[], size_t count, unsigned period_sec);
 
+void wifictl_wpa3_sae_client_overflow (const wifi_ap_record_t ap_record);
+void wifictl_wpa3_sae_dragon_drain (const wifi_ap_record_t ap_record);
+
 /**
  * @brief Stop periodic deauthentication frame broadcast
  */
