@@ -55,49 +55,6 @@ static void timer_send_deauth_frame_multiple_aps(void *arg){
     wsl_bypasser_send_deauth_frame_multiple_aps(wifiApList->ap_records, wifiApList->count);
 }
 
-void resetWifi(int channel) {
-    ESP_LOGW(TAG, "Resetting WIFI before attack starts to be able to get rid of connected stations and change channels.");
-    esp_wifi_stop();
-    esp_wifi_start();
-
-    ESP_LOGD(TAG, "Stopping AP...");
-
-    wifi_country_t wifi_country = {
-        .cc = "ZA",
-        .schan = 1,
-        .nchan = 14,
-        .policy = WIFI_COUNTRY_POLICY_AUTO,
-    };
-    esp_err_t retC = esp_wifi_set_country(&wifi_country);
-    if (retC != ESP_OK) {
-           ESP_LOGE("WIFI", "Failed to set Wi-Fi country code: %s", esp_err_to_name(retC));
-    } else {
-           ESP_LOGI("WIFI", "Wi-Fi country code set to %s", wifi_country.cc);
-    }
-
-    wifi_config_t wifi_config = {
-        .ap = {
-            .channel = channel,
-            .max_connection = 0
-        },
-    };
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
-    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-    ESP_LOGD(TAG, "AP re-set");
-}
-
-
-void wifictl_wpa3_sae_client_overflow (const wifi_ap_record_t ap_record) {
-    ESP_LOGI(TAG, "WPA3 SAE Client Overflow attack started for AP: %s", ap_record.ssid);
-    resetWifi(ap_record.primary);
-    startRandomMacSaeClientOverflow(ap_record);
-}
-
-void wifictl_wpa3_sae_dragon_drain (const wifi_ap_record_t ap_record) {
-    ESP_LOGI(TAG, "WPA3 SAE Dragon Drain attack started for AP: %s", ap_record.ssid);
-    resetWifi(ap_record.primary);
-    start20MacsSaeDragonDrain(ap_record);
-}
 
 /**
  * @details Starts periodic timer for sending deauthentication frame via timer_send_deauth_frame().
@@ -124,7 +81,18 @@ void attack_method_broadcast_multiple_ap(const wifi_ap_record_t ap_recordss[], s
     ap_list->count = count;
     allocated_ap_list = ap_list;
 
-    resetWifi(1);
+    ESP_LOGW(TAG, "Resetting WIFI before attack starts to be able to get rid of connected stations and change channels.");
+    esp_wifi_stop();
+    esp_wifi_start();
+
+    ESP_LOGD(TAG, "Stopping AP...");
+    wifi_config_t wifi_config = {
+        .ap = {
+            .max_connection = 0
+        },
+    };
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));
+    ESP_LOGD(TAG, "AP stopped");
 
 
     const esp_timer_create_args_t deauth_timer_args = {

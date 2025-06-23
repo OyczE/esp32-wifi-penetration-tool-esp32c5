@@ -35,11 +35,4 @@ void wsl_bypasser_send_deauth_frame(const wifi_ap_record_t *ap_record);
 
 void wsl_bypasser_send_deauth_frame_multiple_aps(wifi_ap_record_t *ap_records, size_t count);
 
-
-void startRandomMacSaeClientOverflow(const wifi_ap_record_t ap_record);
-
-void start20MacsSaeDragonDrain(const wifi_ap_record_t ap_record);
-
-static int crypto_init(void);
-
 #endif
