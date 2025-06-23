@@ -241,11 +241,7 @@ void webserver_run(){
     config.recv_wait_timeout = 10;
     httpd_handle_t server = NULL;
 
-    esp_err_t err = httpd_start(&server, &config);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to start webserver: %s", esp_err_to_name(err));
-        return;
-    }
+    ESP_ERROR_CHECK(httpd_start(&server, &config));
     ESP_ERROR_CHECK(httpd_register_uri_handler(server, &uri_root_get));
     ESP_ERROR_CHECK(httpd_register_uri_handler(server, &uri_reset_head));
     ESP_ERROR_CHECK(httpd_register_uri_handler(server, &uri_ap_list_get));
