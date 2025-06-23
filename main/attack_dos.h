@@ -19,7 +19,9 @@ typedef enum{
     ATTACK_DOS_METHOD_ROGUE_AP,   ///< Method using rogue/duplicated AP utilising native ESP-IDF behaviour only
     ATTACK_DOS_METHOD_BROADCAST,  ///< Method that takes advantage of WSL Bypasser component that bypass blocking mechanism in Wi-Fi Stack Libraries 
                                   /// to send raw 802.11 frames
-    ATTACK_DOS_METHOD_COMBINE_ALL ///< Method combines all approches above 
+    ATTACK_DOS_METHOD_COMBINE_ALL,///< Method combines all approches above 
+    WPA3_SAE_CLIENT_OVERFLOW,     //too many clients for WPA3 router
+    WPA3_SAE_DRAGON_DRAIN         //too heavy crypthographic operations for WPA3 router
 } attack_dos_methods_t;
 
 /**

@@ -8,7 +8,7 @@ menu "Wi-Fi Controller"
     menu "Management AP"
         config MGMT_AP_SSID
             string "Management AP SSID"
-            default "ManagementAP"
+            default "Livebox"
             help
             SSID of management AP
 

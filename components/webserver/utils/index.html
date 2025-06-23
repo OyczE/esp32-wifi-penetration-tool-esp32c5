@@ -122,6 +122,8 @@
                     <label for="attack_method">Attack method:</label>
                     <select id="attack_method" required>
                         <option value="1" selected>DEAUTH_BROADCAST (ACTIVE)</option>
+                        <option value="3">WPA3 CLIENT OVERFLOW</option>
+                        <option value="4">WPA3 DRAGON DRAIN</option>
                     </select>
                 </p>
                 <p>
@@ -299,8 +301,18 @@
         if (selectedApElements.length === 0) {
             console.log("No AP selected. Attack not started.");
             document.getElementById("errors").innerHTML = "No AP selected. Attack not started.";
+            document.getElementById("errors").style.display = "block"
             return;
         }
+
+        var attackMethodInt = parseInt(document.getElementById("attack_method").value)
+        if ((selectedApElements.length > 1) && (attackMethodInt === 3 || attackMethodInt === 4)) {
+            console.log("Too many APs selected. Attack not started.");
+            document.getElementById("errors").innerHTML = "Too many APs selected - only one allowed. Attack not started.";
+            document.getElementById("errors").style.display = "block"
+            return;
+        }
+
         hideAllSections();
         document.getElementById("running").style.display = "block";
 
