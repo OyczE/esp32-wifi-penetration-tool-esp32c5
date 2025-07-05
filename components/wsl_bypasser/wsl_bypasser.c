@@ -12,6 +12,11 @@
 #include <stdint.h>
 #include <string.h>
 #include "../../main/global.h"
+#include "esp_random.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/bignum.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/entropy.h"
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
@@ -39,6 +44,7 @@ uint8_t deauth_frame_default[] = {
 
 static uint32_t counter = 0;
 static int64_t start_time = 0;
+static int frame_count = 0;
 
 #define NUM_CLIENTS 20
 
@@ -365,8 +371,6 @@ void start20MacsSaeDragonDrain(const wifi_ap_record_t ap_record) {
 }
 
 // END of SAE Methods
-
-static uint32_t counter = 0;
 
 
 /**
