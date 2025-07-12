@@ -2,8 +2,6 @@
 #include "esp_log.h"
 #include "freertos/task.h"
 
-static const char* TAG = "led_status";
-
 static led_strip_handle_t led_strip;
 static led_state_t current_state = LED_STATE_BOOT;
 
