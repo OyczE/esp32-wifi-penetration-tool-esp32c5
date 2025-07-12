@@ -14,7 +14,7 @@ menu "Example Configuration"
             bool "GPIO"
         config BLINK_LED_STRIP
             bool "LED strip"
-    endchoice
+endchoice
 
     choice BLINK_LED_STRIP_BACKEND
         depends on BLINK_LED_STRIP
@@ -45,5 +45,23 @@ menu "Example Configuration"
         default 1000
         help
             Define the blinking period in milliseconds.
+
+endmenu
+
+menu "CLI Configuration"
+
+    config CLI_UART_TX_GPIO
+        int "CLI UART TX GPIO number"
+        range 0 49
+        default 43
+        help
+            GPIO used for UART TX.
+
+    config CLI_UART_RX_GPIO
+        int "CLI UART RX GPIO number"
+        range 0 49
+        default 44
+        help
+            GPIO used for UART RX.
 
 endmenu
