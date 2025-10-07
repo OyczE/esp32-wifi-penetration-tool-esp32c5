@@ -434,7 +434,6 @@ static void st7789_send_color(void * data, size_t length)
 {
 	static uint8_t buf_c[SIZE_B];
 	uint8_t *data_i = data;
-	int asd = (uint8_t)data_i[0];
     disp_wait_for_pending_transactions();
     gpio_set_level(ST7789_DC, 1);
     for(int idx = 0; idx < length ; idx +=2){		//Invert color bytes

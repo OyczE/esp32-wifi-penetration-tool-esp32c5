@@ -10,6 +10,7 @@
  */
 #include "esp_heap_caps.h"
 #include "esp_psram.h"
+#include "sdkconfig.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -375,7 +376,8 @@ void app_main(void) {
     };
     uart_driver_install(CLI_UART_PORT, 2048, 0, 0, NULL, 0);
     uart_param_config(CLI_UART_PORT, &uart_config);
-    uart_set_pin(CLI_UART_PORT, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_set_pin(CLI_UART_PORT, CONFIG_CLI_UART_TX_GPIO, CONFIG_CLI_UART_RX_GPIO,
+                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
     wifictl_mgmt_ap_start();
     attack_init();
